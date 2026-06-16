@@ -1,0 +1,549 @@
+/**
+ * 全局样式
+ *
+ * 设计理念：
+ * - 温暖、简洁的日记风格
+ * - 使用 CSS 变量实现主题一致性
+ * - 响应式设计，适配不同屏幕尺寸
+ * - 无外部 CSS 框架，保持轻量
+ */
+
+/* ========== CSS 变量（设计令牌） ========== */
+:root {
+  /* 主色调：温暖的棕色系，适合日记应用的私密、温馨感 */
+  --color-primary: #6B4423;
+  --color-primary-light: #8B6543;
+  --color-primary-dark: #4A2F16;
+
+  /* 背景色：温暖的米白色 */
+  --color-bg: #FAF6F1;
+  --color-bg-card: #FFFFFF;
+  --color-bg-input: #F5F0EB;
+
+  /* 文字色 */
+  --color-text: #2C1810;
+  --color-text-secondary: #8B7355;
+  --color-text-muted: #B0A090;
+
+  /* 边框色 */
+  --color-border: #E8DDD4;
+  --color-border-focus: #6B4423;
+
+  /* 功能色 */
+  --color-success: #4CAF50;
+  --color-danger: #E53935;
+  --color-danger-light: #FFEBEE;
+
+  /* 间距 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(44, 24, 16, 0.06);
+  --shadow-md: 0 4px 12px rgba(44, 24, 16, 0.08);
+  --shadow-lg: 0 8px 24px rgba(44, 24, 16, 0.12);
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Georgia', 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+
+  /* 过渡 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 350ms ease;
+}
+
+/* ========== 暗色模式 ========== */
+[data-theme="dark"] {
+  --color-primary: #C49A6C;
+  --color-primary-light: #D4B08C;
+  --color-primary-dark: #A67C52;
+
+  --color-bg: #1A1410;
+  --color-bg-card: #2C241E;
+  --color-bg-input: #3A3028;
+
+  --color-text: #E8DDD4;
+  --color-text-secondary: #B0A090;
+  --color-text-muted: #7A6B5C;
+
+  --color-border: #4A3D32;
+  --color-border-focus: #C49A6C;
+
+  --color-success: #66BB6A;
+  --color-danger: #EF5350;
+  --color-danger-light: #4A2020;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 重置与基础样式 ========== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (min-width: 1024px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover {
+  color: var(--color-primary-light);
+}
+
+/* ========== 按钮通用样式 ========== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-light);
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn-outline:hover {
+  border-color: var(--color-primary);
+  background-color: rgba(107, 68, 35, 0.05);
+}
+
+.btn-danger {
+  background-color: var(--color-danger);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #C62828;
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-ghost:hover {
+  background-color: rgba(107, 68, 35, 0.05);
+  color: var(--color-text);
+}
+
+.btn-sm {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8rem;
+}
+
+.btn-lg {
+  padding: var(--space-md) var(--space-lg);
+  font-size: 1rem;
+}
+
+/* ========== 输入框通用样式 ========== */
+.input,
+.textarea,
+.select {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-input);
+  color: var(--color-text);
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.input:focus,
+.textarea:focus,
+.select:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(107, 68, 35, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 120px;
+  line-height: 1.7;
+}
+
+/* ========== 卡片样式 ========== */
+.card {
+  background-color: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border);
+  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ========== 工具类 ========== */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 var(--space-lg);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--transition-normal);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: all var(--transition-normal);
+}
+
+.slide-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.slide-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* ========== 响应式 ========== */
+@media (min-width: 1024px) {
+  :root {
+    --space-sm: 10px;
+    --space-md: 20px;
+    --space-lg: 28px;
+    --space-xl: 40px;
+    --space-2xl: 56px;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --space-md: 12px;
+    --space-lg: 18px;
+    --space-xl: 24px;
+  }
+}
+
+/* ========== 空状态占位 ========== */
+.empty-state {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-md);
+  color: var(--color-text-muted);
+}
+
+.empty-state .emoji {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-lg);
+}
+
+/* ========== 确认对话框 ========== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+}
+
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.modal-content {
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  max-width: 400px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal-content h3 {
+  font-family: var(--font-serif);
+  margin-bottom: var(--space-md);
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-top: var(--space-lg);
+}
+
+/* ========== Markdown 渲染样式 ========== */
+/*
+ * 这些样式同时应用于：
+ * 1. MarkdownEditor 组件的预览面板
+ * 2. DetailView 页面的日记内容展示
+ *
+ * 设计原则：
+ * - 与整体日记应用的暖色调保持一致
+ * - 排版清晰，适合长时间阅读
+ * - 图片自适应宽度，不超出容器
+ */
+.markdown-body {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--color-text);
+  word-break: break-word;
+}
+
+/* 标题 */
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4,
+.markdown-body h5,
+.markdown-body h6 {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  color: var(--color-text);
+}
+
+.markdown-body h1 {
+  font-size: 1.8rem;
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 0.3em;
+}
+
+.markdown-body h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.2em;
+}
+
+.markdown-body h3 {
+  font-size: 1.3rem;
+}
+
+.markdown-body h4 {
+  font-size: 1.1rem;
+}
+
+/* 段落 */
+.markdown-body p {
+  margin-bottom: 1em;
+}
+
+/* 链接 */
+.markdown-body a {
+  color: var(--color-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.markdown-body a:hover {
+  color: var(--color-primary-light);
+}
+
+/* 强调 */
+.markdown-body strong {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.markdown-body em {
+  font-style: italic;
+}
+
+/* 行内代码 */
+.markdown-body code {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  background: var(--color-bg-input);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--color-primary-dark);
+}
+
+/* 代码块 */
+.markdown-body pre {
+  background: #2d2d2d;
+  color: #f8f8f2;
+  padding: var(--space-md);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+[data-theme="dark"] .markdown-body pre {
+  background: #1a1a1a;
+}
+
+.markdown-body pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* 引用 */
+.markdown-body blockquote {
+  border-left: 4px solid var(--color-primary);
+  padding: var(--space-sm) var(--space-md);
+  margin: 1em 0;
+  background: var(--color-bg-input);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--color-text-secondary);
+}
+
+.markdown-body blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* 列表 */
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.5em;
+  margin: 0.5em 0;
+}
+
+.markdown-body li {
+  margin: 0.3em 0;
+}
+
+.markdown-body ul {
+  list-style-type: disc;
+}
+
+.markdown-body ol {
+  list-style-type: decimal;
+}
+
+/* 分割线 */
+.markdown-body hr {
+  border: none;
+  border-top: 2px solid var(--color-border);
+  margin: 2em 0;
+}
+
+/* 表格 */
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1em 0;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--color-border);
+  padding: var(--space-sm) var(--space-md);
+  text-align: left;
+}
+
+.markdown-body th {
+  background: var(--color-bg-input);
+  font-weight: 600;
+}
+
+.markdown-body tr:nth-child(even) {
+  background: var(--color-bg-input);
+}
+
+/* 图片 - 响应式 */
+.markdown-body img,
+.markdown-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-sm);
+  margin: 0.5em 0;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 任务列表（GFM） */
+.markdown-body input[type="checkbox"] {
+  margin-right: 0.5em;
+}
+
+/* 无序列表中的任务列表 */
+.markdown-body ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.markdown-body li.task-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+}
