@@ -12,13 +12,24 @@
 
 import express from 'express';
 import cors from 'cors';
+import fs from 'fs';
 import path from 'path';
 import { initDatabase, closeDatabase } from './database';
 import apiRouter from './routes';
 import uploadRouter from './upload';
 import importExportRouter from './import-export';
 
-const PORT = process.env.PORT || 4567;
+const PORT = process.env.PORT || 3456;
+
+// 计算前端静态资源目录（适配 tsx 开发 / 编译后 / pkg 三种模式）
+const PUBLIC_DIR = (() => {
+  const prodPath = path.join(__dirname, 'public');
+  if (fs.existsSync(prodPath)) return prodPath;
+  // tsx 开发模式：__dirname = server/src/，实际文件在 server/dist/public/
+  const devPath = path.resolve(__dirname, '..', 'dist', 'public');
+  if (fs.existsSync(devPath)) return devPath;
+  return prodPath; // 保底，pkg 中虽然 fs 检查可能不准确但路径有效
+})();
 
 // 创建 Express 应用实例
 const app = express();
@@ -27,7 +38,7 @@ const app = express();
  * 中间件配置
  *
  * cors(): 允许跨域请求
- * - 开发时前后端分离运行（Vite 在 5173，Express 在 4567），必须开启 CORS
+ * - 开发时前后端分离运行（Vite 在 4173，Express 在 3456），必须开启 CORS
  * - 生产环境前后端打包在一起则不需要，但开启也不会有问题
  *
  * express.json(): 解析 JSON 请求体
@@ -44,13 +55,13 @@ app.use(express.urlencoded({ extended: true }));
  * 将前端构建产物（client/dist）作为静态资源提供
  * 生产环境时，Express 同时充当静态文件服务器和 API 服务器
  */
-app.use(express.static(path.join(__dirname, '..', '..', 'client', 'dist')));
+app.use(express.static(PUBLIC_DIR));
 
 /**
  * 上传文件静态服务
  * 让浏览器可以通过 /uploads/filename.jpg 访问上传的图片
  */
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+app.use('/uploads', express.static(path.join(process.cwd(), 'data', 'uploads')));
 
 /**
  * API 路由挂载
@@ -71,7 +82,7 @@ app.use('/api', importExportRouter);
  * 注意：这个路由必须放在所有其他路由之后
  */
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', '..', 'client', 'dist', 'index.html'));
+  res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
 });
 
 /**
@@ -86,6 +97,7 @@ function startServer(): void {
   app.listen(PORT, () => {
     console.log(`[Server] 日记应用服务器已启动: http://localhost:${PORT}`);
     console.log(`[Server] API 地址: http://localhost:${PORT}/api`);
+    console.log(`[Server] 前端开发服务器请运行: http://localhost:4173`);
   });
 }
 
@@ -99,16 +111,46 @@ function startServer(): void {
  * 如果不处理这些信号，数据库连接可能不会被正确关闭，
  * 导致 WAL 文件残留或数据损坏
  */
+
+/**
+ * 暂停等待用户按键后退出（仅在 cmd 终端生效）
+ * 这样双击 exe 时能看到输出，不会一闪而过
+ */
+function pauseOnExit(code: number): void {
+  if (process.stdin.isTTY) {
+    process.stdin.setRawMode(true)
+    process.stdin.resume()
+    console.log('按任意键退出...')
+    process.stdin.once('data', () => {
+      process.exit(code)
+    })
+  } else {
+    process.exit(code)
+  }
+}
+
 process.on('SIGINT', () => {
   console.log('\n[Server] 收到 SIGINT 信号，正在关闭...');
   closeDatabase();
-  process.exit(0);
+  pauseOnExit(0);
 });
 
 process.on('SIGTERM', () => {
   console.log('\n[Server] 收到 SIGTERM 信号，正在关闭...');
   closeDatabase();
-  process.exit(0);
+  pauseOnExit(0);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('\n[Server] 未捕获的异常:', err);
+  closeDatabase();
+  pauseOnExit(1);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('\n[Server] 未处理的 Promise 拒绝:', reason);
+  closeDatabase();
+  pauseOnExit(1);
 });
 
 // 启动！

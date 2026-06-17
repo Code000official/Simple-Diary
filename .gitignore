@@ -1,4 +1,22 @@
-# Logs
+# --- 依赖 ---
+node_modules
+
+# --- 构建产物 ---
+dist
+dist-ssr
+*.tsbuildinfo
+
+# --- 用户数据（运行时自动创建） ---
+data/
+server/diary.json
+server/uploads/
+
+# --- TRAE / AI 工具的自动生成文件 ---
+skills-lock.json
+.agents/
+.trae/specs/
+
+# --- 日志 ---
 logs
 *.log
 npm-debug.log*
@@ -7,14 +25,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.DS_Store
-dist
-dist-ssr
-coverage
-*.local
-
-# Editor directories and files
+# --- 编辑器 / IDE ---
 .vscode/*
 !.vscode/extensions.json
 .idea
@@ -24,20 +35,20 @@ coverage
 *.sln
 *.sw?
 
-*.tsbuildinfo
+# --- 环境变量敏感文件 ---
+.env
+.env.*
+*.local
 
+# --- 缓存 / 临时 ---
 .eslintcache
-
-# Cypress
-/cypress/videos/
-/cypress/screenshots/
-
-# Vitest
 __screenshots__/
-
-# Vite
 *.timestamp-*-*.mjs
 
-# Server temp
-*.diaty.json
-*.uploads/
+# --- macOS ---
+.DS_Store
+
+# --- 测试产物 ---
+coverage
+/cypress/videos/
+/cypress/screenshots/

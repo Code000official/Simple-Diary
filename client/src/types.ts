@@ -34,6 +34,7 @@ export interface UpdateEntryRequest {
   tags?: string
   date?: string
   favorited?: boolean
+  pinned_at?: string | null
   show_in_timeline?: boolean
 }
 

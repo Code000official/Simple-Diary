@@ -3,18 +3,32 @@
   "version": "1.0.0",
   "description": "Diary app backend server",
   "main": "dist/index.js",
+  "bin": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "bundle:win": "npx pkg . --target node18-win-x64 --output dist/diary-app.exe",
+    "bundle:linux": "npx pkg . --target node18-linux-x64 --output dist/diary-app-linux",
+    "bundle": "npm run bundle:win && npm run bundle:linux"
+  },
+  "pkg": {
+    "assets": [
+      "dist/public/**/*",
+      "node_modules/@jimp/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64"
+    ]
   },
   "dependencies": {
     "adm-zip": "^0.5.17",
     "cors": "^2.8.5",
     "express": "^4.21.0",
     "express-rate-limit": "^8.5.2",
-    "multer": "^2.1.1",
-    "sharp": "^0.35.1"
+    "jimp": "^1.6.1",
+    "multer": "^2.1.1"
   },
   "devDependencies": {
     "@types/adm-zip": "^0.5.8",
@@ -22,6 +36,7 @@
     "@types/express": "^5.0.0",
     "@types/multer": "^2.1.0",
     "@types/node": "^22.0.0",
+    "pkg": "^5.8.1",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
   }

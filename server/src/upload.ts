@@ -2,13 +2,13 @@ import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import sharp from 'sharp';
+import { Jimp } from 'jimp';
 import rateLimit from 'express-rate-limit';
 import type { ApiResponse } from './types';
 
 const router = Router();
 
-const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const UPLOADS_DIR = path.join(process.cwd(), 'data', 'uploads');
 
 const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
 
@@ -146,32 +146,13 @@ router.post('/upload', uploadLimiter, validateOrigin, (req: Request, res: Respon
     }
 
     try {
-      const metadata = await sharp(filePath).metadata();
-      if ((metadata.width && metadata.width > 4096) || (metadata.height && metadata.height > 4096)) {
+      const image = await Jimp.read(filePath);
+      if (image.bitmap.width > 4096 || image.bitmap.height > 4096) {
         fs.unlinkSync(filePath);
         const response: ApiResponse = { success: false, message: '图片尺寸超过限制（最大 4096×4096）' };
         res.status(400).json(response);
         return;
       }
-
-      const ext = path.extname(req.file.filename).toLowerCase();
-      const tempPath = filePath + '.tmp';
-
-      const sharpInstance = sharp(filePath);
-      if (ext === '.jpg' || ext === '.jpeg') {
-        await sharpInstance.jpeg().toFile(tempPath);
-      } else if (ext === '.png') {
-        await sharpInstance.png().toFile(tempPath);
-      } else if (ext === '.gif') {
-        await sharpInstance.gif().toFile(tempPath);
-      } else if (ext === '.webp') {
-        await sharpInstance.webp().toFile(tempPath);
-      } else {
-        await sharpInstance.toFile(tempPath);
-      }
-
-      fs.copyFileSync(tempPath, filePath);
-      fs.unlinkSync(tempPath);
     } catch {
       try { fs.unlinkSync(filePath); } catch { /* empty */ }
       const response: ApiResponse = { success: false, message: '图片处理失败，文件可能已损坏' };

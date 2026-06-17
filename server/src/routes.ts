@@ -232,7 +232,7 @@ router.delete('/entries/:id/permanent', async (req: Request, res: Response) => {
         const stillReferenced = allEntries.some(e => e.content && e.content.includes(url));
         if (!stillReferenced) {
           const filename = url.replace('/uploads/', '');
-          const filePath = path.join(__dirname, '..', 'uploads', filename);
+          const filePath = path.join(process.cwd(), 'data', 'uploads', filename);
           try {
             fs.unlinkSync(filePath);
           } catch (fileError) {

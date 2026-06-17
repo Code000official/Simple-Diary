@@ -28,7 +28,7 @@
       <div class="mood-dist">
         <h3 class="subsection-title">心情分布</h3>
         <div class="mood-bars">
-          <div v-for="m in stats.moodDist" :key="m.mood" class="mood-bar-row">
+          <div v-for="m in stats.moodDist" :key="m.value" class="mood-bar-row">
             <span class="mood-bar-label">{{ m.emoji }} {{ m.label }}</span>
             <div class="mood-bar-track">
               <div class="mood-bar-fill" :style="{ width: stats.moodMax > 0 ? (m.count / stats.moodMax * 100) + '%' : '0%' }"></div>

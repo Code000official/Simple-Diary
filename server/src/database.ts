@@ -43,8 +43,8 @@ interface DatabaseSchema {
   nextId: number;  // 下一个可用的 ID（自增计数器）
 }
 
-/** 数据库文件路径：存放在 server 目录下 */
-const DB_PATH = path.join(__dirname, '..', 'diary.json');
+/** 数据库文件路径：存放在 exe 同级的 data 目录下 */
+const DB_PATH = path.join(process.cwd(), 'data', 'diary.json');
 
 /** 内存中的数据库实例 */
 let db: DatabaseSchema = {
@@ -68,6 +68,9 @@ let db: DatabaseSchema = {
  */
 export function initDatabase(): void {
   try {
+    // 确保 data 目录存在
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
+
     if (fs.existsSync(DB_PATH)) {
       // 数据库文件存在，读取数据
       const data = fs.readFileSync(DB_PATH, 'utf-8');
@@ -129,6 +132,7 @@ export function initDatabase(): void {
  */
 async function saveToDisk(): Promise<void> {
   try {
+    fs.mkdirSync(path.dirname(DB_PATH), { recursive: true });
     const tempPath = DB_PATH + '.tmp';
     const data = JSON.stringify(db);
 

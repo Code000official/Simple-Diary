@@ -4,8 +4,8 @@ import AdmZip from 'adm-zip';
 import fs from 'fs';
 import path from 'path';
 
-const DB_PATH = path.join(__dirname, '..', 'diary.json');
-const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+const DB_PATH = path.join(process.cwd(), 'data', 'diary.json');
+const UPLOADS_DIR = path.join(process.cwd(), 'data', 'uploads');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024 } });
 

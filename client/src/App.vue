@@ -26,9 +26,6 @@
         <router-link to="/stats" class="nav-link" active-class="nav-link-active">
           📊 统计
         </router-link>
-        <router-link to="/tags" class="nav-link" active-class="nav-link-active">
-          🏷️ 标签
-        </router-link>
         <router-link to="/settings" class="nav-link" active-class="nav-link-active">
           ⚙️ 设置
         </router-link>
