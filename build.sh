@@ -20,6 +20,7 @@ cd ..
 echo "[3/6] 安装后端依赖"
 cd server
 npm install
+cd ..
 
 echo "[4/6] 编译后端 (TypeScript)"
 cd server
