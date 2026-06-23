@@ -149,7 +149,7 @@
             @change="toggleSelection(entry.id)"
           />
         </div>
-        <div class="card-img" @click.stop="openLightbox(entry.firstImg)">
+        <div class="card-img" @click.stop="isManageMode ? toggleSelection(entry.id) : openLightbox(entry.firstImg)">
           <img v-if="entry.firstImg" :src="entry.firstImg" alt="" />
         </div>
         <div class="card-body">
@@ -158,7 +158,7 @@
             <button
               class="card-fav-btn"
               :class="{ favorited: entry.favorited }"
-              @click.stop="toggleFav(entry)"
+              @click.stop="isManageMode ? toggleSelection(entry.id) : toggleFav(entry)"
               title="收藏"
             >⭐</button>
           </div>

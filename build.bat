@@ -7,8 +7,16 @@ echo         server/dist/Simple-diary-linux (Linux)
 echo ============================================
 echo.
 
-echo [1/4] 构建前端 (Vue)
+echo [1/6] 安装前端依赖
 cd client
+call npm install
+if %errorlevel% neq 0 (
+  echo 前端依赖安装失败！
+  pause
+  exit /b 1
+)
+
+echo [2/6] 构建前端 (Vue)
 call npm run build
 if %errorlevel% neq 0 (
   echo 前端构建失败！
@@ -17,8 +25,16 @@ if %errorlevel% neq 0 (
 )
 cd ..
 
-echo [2/4] 编译后端 (TypeScript)
+echo [3/6] 安装后端依赖
 cd server
+call npm install
+if %errorlevel% neq 0 (
+  echo 后端依赖安装失败！
+  pause
+  exit /b 1
+)
+
+echo [4/6] 编译后端 (TypeScript)
 call npm run build
 if %errorlevel% neq 0 (
   echo 后端编译失败！
@@ -26,11 +42,11 @@ if %errorlevel% neq 0 (
   exit /b 1
 )
 
-echo [3/4] 复制前端产物到后端
+echo [5/6] 复制前端产物到后端
 if exist dist\public rmdir /s /q dist\public
 xcopy ..\client\dist dist\public\ /e /i /q >nul
 
-echo [4/4] 打包双平台可执行文件
+echo [6/6] 打包双平台可执行文件
 call npm run bundle
 if %errorlevel% neq 0 (
   echo 打包失败！
