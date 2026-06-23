@@ -39,6 +39,6 @@ echo
 echo "============================================"
 echo "  打包完成！"
 echo
-echo "  Windows: server/dist/diary-app.exe"
-echo "  Linux:   server/dist/diary-app-linux"
+echo "  Windows: server/dist/Simple-diary.exe"
+echo "  Linux:   server/dist/Simple-diary-linux"
 echo "============================================"

@@ -8,8 +8,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "bundle:win": "npx pkg . --target node18-win-x64 --output dist/diary-app.exe",
-    "bundle:linux": "npx pkg . --target node18-linux-x64 --output dist/diary-app-linux",
+    "bundle:win": "npx pkg . --target node18-win-x64 --output dist/Simple-diary.exe",
+    "bundle:linux": "npx pkg . --target node18-linux-x64 --output dist/Simple-diary-linux",
     "bundle": "npm run bundle:win && npm run bundle:linux"
   },
   "pkg": {
