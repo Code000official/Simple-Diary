@@ -199,6 +199,40 @@ router.post('/entries/:id/restore', async (req: Request, res: Response) => {
 });
 
 /**
+ * 清理日记内容中不再被任何条目引用的图片文件
+ *
+ * 从 content 中提取所有 /uploads/ 图片 URL，检查其他条目是否还在使用，
+ * 如果完全孤立则删除物理文件。软删除时可传入当前条目 ID 以排除自身引用。
+ */
+function cleanupOrphanedImages(content: string, excludeEntryId?: number): void {
+  const imageRegex = /!\[.*?\]\((\/uploads\/[^)]+)\)|<img[^>]+src="(\/uploads\/[^"]+)"/g;
+  const imageUrls: string[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = imageRegex.exec(content)) !== null) {
+    imageUrls.push(match[1] || match[2]);
+  }
+
+  if (imageUrls.length === 0) return;
+
+  const activeEntries = queryEntries({ limit: 10000 }).data;
+  const deletedEntries = queryDeletedEntries().filter(e => e.id !== excludeEntryId);
+  const allEntries = [...activeEntries, ...deletedEntries];
+
+  for (const url of imageUrls) {
+    const stillReferenced = allEntries.some(e => e.content && e.content.includes(url));
+    if (!stillReferenced) {
+      const filename = url.replace('/uploads/', '');
+      const filePath = path.join(process.cwd(), 'data', 'uploads', filename);
+      try {
+        fs.unlinkSync(filePath);
+      } catch (fileError) {
+        console.error('[API] 删除孤立图片文件失败:', fileError);
+      }
+    }
+  }
+}
+
+/**
  * DELETE /api/entries/:id/permanent
  * 永久删除日记（从回收站彻底删除）
  */
@@ -218,29 +252,7 @@ router.delete('/entries/:id/permanent', async (req: Request, res: Response) => {
     }
 
     await permanentlyDeleteEntry(Number(id));
-
-    const imageRegex = /!\[.*?\]\((\/uploads\/[^)]+)\)|<img[^>]+src="(\/uploads\/[^"]+)"/g;
-    const imageUrls: string[] = [];
-    let match;
-    while ((match = imageRegex.exec(entry.content)) !== null) {
-      imageUrls.push(match[1] || match[2]);
-    }
-
-    if (imageUrls.length > 0) {
-      const allEntries = [...queryEntries({ limit: 10000 }).data, ...queryDeletedEntries()];
-      for (const url of imageUrls) {
-        const stillReferenced = allEntries.some(e => e.content && e.content.includes(url));
-        if (!stillReferenced) {
-          const filename = url.replace('/uploads/', '');
-          const filePath = path.join(process.cwd(), 'data', 'uploads', filename);
-          try {
-            fs.unlinkSync(filePath);
-          } catch (fileError) {
-            console.error('[API] 删除孤立图片文件失败:', fileError);
-          }
-        }
-      }
-    }
+    cleanupOrphanedImages(entry.content);
 
     const response: ApiResponse = {
       success: true,
