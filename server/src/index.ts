@@ -96,8 +96,6 @@ function startServer(): void {
 
   app.listen(PORT, () => {
     console.log(`[Server] 日记应用服务器已启动: http://localhost:${PORT}`);
-    console.log(`[Server] API 地址: http://localhost:${PORT}/api`);
-    console.log(`[Server] 前端开发服务器请运行: http://localhost:4173`);
   });
 }
 

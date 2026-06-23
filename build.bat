@@ -2,8 +2,8 @@
 chcp 65001 >nul
 echo ============================================
 echo   日记应用 - 一键打包脚本
-echo   产物：server/dist/diary-app.exe (Windows)
-echo         server/dist/diary-app-linux (Linux)
+echo   产物：server/dist/Simple-diary.exe (Windows)
+echo         server/dist/Simple-diary-linux (Linux)
 echo ============================================
 echo.
 
@@ -44,7 +44,7 @@ echo.
 echo ============================================
 echo  打包完成！
 echo.
-echo  Windows: server\dist\diary-app.exe
-echo  Linux:   server\dist\diary-app-linux
+echo  Windows: server\dist\Simple-diary.exe
+echo  Linux:   server\dist\Simple-diary-linux
 echo ============================================
 pause
