@@ -46,7 +46,7 @@
             />
           </div>
           <div v-if="entry.firstImg" class="card-img">
-            <img :src="entry.firstImg" alt="" />
+            <img :src="resolvedImages.get(entry.id) || entry.firstImg" alt="" />
           </div>
           <div class="card-body">
             <div class="card-title-row">
@@ -76,7 +76,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { DiaryEntry } from '../types'
 import { MOOD_OPTIONS } from '../types'
-import { fetchDeletedEntries, restoreEntry, permanentlyDeleteEntry } from '../api'
+import { fetchDeletedEntries, restoreEntry, permanentlyDeleteEntry, resolveImageUrl } from '../api'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 
@@ -102,11 +102,30 @@ interface TrashEntryMeta {
 
 onMounted(() => load())
 
+const resolvedImages = ref(new Map<number, string>())
+
+async function resolveFirstImg(id: number, url: string): Promise<void> {
+  if (!url || !url.startsWith('/uploads/')) return
+  const resolved = await resolveImageUrl(url)
+  if (resolved !== url) {
+    resolvedImages.value.set(id, resolved)
+  }
+}
+
 async function load(): Promise<void> {
   loading.value = true
   try {
     const res = await fetchDeletedEntries()
-    if (res.success && res.data) entries.value = res.data
+    if (res.success && res.data) {
+      entries.value = res.data
+      resolvedImages.value = new Map()
+      for (const entry of res.data) {
+        const img = extractFirstImage(entry.content)
+        if (img && img.startsWith('/uploads/')) {
+          resolveFirstImg(entry.id, img)
+        }
+      }
+    }
   } catch (error) {
     console.error('加载回收站失败:', error)
   } finally {

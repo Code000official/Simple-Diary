@@ -1,6 +1,7 @@
 /** 日记条目 - 与后端 types.ts 保持同步 */
 export interface DiaryEntry {
   id: number
+  uuid?: string        // 全局唯一 ID，用于跨设备同步去重
   title: string
   content: string
   mood: string

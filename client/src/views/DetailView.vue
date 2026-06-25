@@ -93,7 +93,7 @@
       </div>
 
       <!-- 正文内容 - Markdown 渲染 -->
-      <div class="entry-content markdown-body" v-html="renderedContent" @click="onContentClick"></div>
+      <div class="entry-content markdown-body" v-html="resolvedContent || renderedContent" @click="onContentClick"></div>
     </article>
 
     <Lightbox :show="!!lightboxSrc" :src="lightboxSrc" @close="lightboxSrc = ''" />
@@ -122,7 +122,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import type { DiaryEntry } from '../types'
 import { MOOD_OPTIONS, WEATHER_OPTIONS } from '../types'
-import { fetchEntry, deleteEntry, updateEntry } from '../api'
+import { fetchEntry, deleteEntry, updateEntry, resolveContentImages } from '../api'
 import { useDialog } from '../composables/useDialog'
 import Lightbox from '../components/Lightbox.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
@@ -145,12 +145,26 @@ function mdToHtml(text: string): string {
 }
 
 /**
- * 渲染日记内容：HTML 直接输出，旧 Markdown 实时转换
+ * 渲染日记内容（同步，/uploads/ 保持原样）
  */
 const renderedContent = computed(() => {
   if (!entry.value?.content) return ''
   return mdToHtml(entry.value.content)
 })
+
+/** 异步解析图片后的内容 */
+const resolvedContent = ref('')
+
+async function resolveEntryImages() {
+  if (!entry.value?.content) return
+  const html = renderedContent.value
+  if (!html) return
+  try {
+    resolvedContent.value = await resolveContentImages(html)
+  } catch (err) {
+    console.error('[DetailView] 解析图片失败:', err)
+  }
+}
 
 /* ==================== 响应式状态 ==================== */
 
@@ -185,6 +199,7 @@ async function loadEntry(): Promise<void> {
     const response = await fetchEntry(entryId.value)
     if (response.success && response.data) {
       entry.value = response.data
+      await resolveEntryImages()
     }
   } catch (error) {
     console.error('加载日记详情失败:', error)
