@@ -29,6 +29,10 @@
         <router-link to="/settings" class="nav-link" active-class="nav-link-active">
           ⚙️ 设置
         </router-link>
+        <div class="sync-bar" @click="goSettings" title="点击查看同步设置">
+          <span :class="['sync-bar-dot', syncStatus]"></span>
+          <span class="sync-bar-text">{{ syncBarText }}</span>
+        </div>
         <router-link to="/edit" class="btn btn-primary sidebar-write">
           ✏️ 写日记
         </router-link>
@@ -46,7 +50,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useSyncConfig } from './composables/useSyncConfig'
+import { SyncService } from './sync'
+
+const router = useRouter()
+const {
+  serverUrl, syncStatus, autoSync,
+  setSyncStatus, setLastSyncTime, setLastError,
+} = useSyncConfig()
 
 const THEME_KEY = 'diary_theme'
 const isDark = ref(localStorage.getItem(THEME_KEY) === 'dark')
@@ -62,6 +75,39 @@ function toggleTheme(): void {
 }
 
 applyTheme(isDark.value)
+
+const syncBarText = computed(() => {
+  const map: Record<string, string> = { idle: '未配置同步', connecting: '连接中...', connected: '已同步', syncing: '同步中...', error: '同步错误' }
+  return map[syncStatus.value] || syncStatus.value
+})
+
+function goSettings() {
+  router.push('/settings')
+}
+
+/* 启动时初始化同步（仅当用户开启了自动同步） */
+onMounted(async () => {
+  if (!autoSync.value) return
+  const url = serverUrl.value
+  if (!url) return
+  const svc = new SyncService(url, (s) => setSyncStatus(s as any))
+  const online = await svc.ping()
+  if (online) {
+    setSyncStatus('connected')
+    const result = await svc.fullSync()
+    if (result.errors.length === 0) {
+      setLastSyncTime(new Date().toLocaleString('zh-CN'))
+    } else {
+      setLastError(result.errors.join('; '))
+    }
+    if (autoSync.value) {
+      svc.start()
+    }
+  } else {
+    // 服务器不可达，不启动自动同步
+    setSyncStatus('idle')
+  }
+})
 </script>
 
 <style scoped>
@@ -175,6 +221,49 @@ applyTheme(isDark.value)
 
 .sidebar-write:hover {
   text-decoration: none;
+}
+
+.sync-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  margin-top: var(--space-xs);
+}
+
+.sync-bar:hover {
+  color: var(--color-text);
+  background: rgba(107, 68, 35, 0.05);
+}
+
+.sync-bar-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sync-bar-dot.idle { background: #9E9E9E; }
+.sync-bar-dot.connecting { background: #FFA726; animation: syncPulse 1s infinite; }
+.sync-bar-dot.connected { background: #66BB6A; }
+.sync-bar-dot.syncing { background: #42A5F5; animation: syncPulse 0.5s infinite; }
+.sync-bar-dot.error { background: #EF5350; }
+
+@keyframes syncPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.sync-bar-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .main {

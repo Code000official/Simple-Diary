@@ -149,8 +149,8 @@
             @change="toggleSelection(entry.id)"
           />
         </div>
-        <div class="card-img" @click.stop="isManageMode ? toggleSelection(entry.id) : openLightbox(entry.firstImg)">
-          <img v-if="entry.firstImg" :src="entry.firstImg" alt="" />
+        <div class="card-img" @click.stop="isManageMode ? toggleSelection(entry.id) : openLightbox(resolvedImages.get(entry.id) || entry.firstImg)">
+          <img v-if="entry.firstImg" :src="resolvedImages.get(entry.id) || entry.firstImg" alt="" />
         </div>
         <div class="card-body">
           <div class="card-title-row">
@@ -214,7 +214,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { DiaryEntry } from '../types'
 import { MOOD_OPTIONS } from '../types'
-import { fetchEntries, deleteEntry, updateEntry } from '../api'
+import { fetchEntries, deleteEntry, updateEntry, resolveImageUrl } from '../api'
 import Lightbox from '../components/Lightbox.vue'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
@@ -255,6 +255,17 @@ const lightboxSrc = ref('')
 
 const isManageMode = ref(false)
 const selectedIds = ref(new Set<number>())
+
+/** 已解析的图片 URL 缓存（entry id → ObjectURL） */
+const resolvedImages = ref(new Map<number, string>())
+
+async function resolveFirstImg(id: number, url: string): Promise<void> {
+  if (!url || !url.startsWith('/uploads/')) return
+  const resolved = await resolveImageUrl(url)
+  if (resolved !== url) {
+    resolvedImages.value.set(id, resolved)
+  }
+}
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -402,6 +413,14 @@ async function loadAll(): Promise<void> {
     const response = await fetchEntries({ search: searchQuery.value || undefined, limit: 1000 })
     if (response.success && response.data) {
       entries.value = response.data
+      // 异步解析卡片封面图片
+      resolvedImages.value = new Map()
+      for (const entry of response.data) {
+        const img = extractFirstImage(entry.content)
+        if (img && img.startsWith('/uploads/')) {
+          resolveFirstImg(entry.id, img)
+        }
+      }
     }
   } catch (error) {
     console.error('加载失败:', error)

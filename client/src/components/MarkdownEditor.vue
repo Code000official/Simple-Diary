@@ -147,7 +147,7 @@
 
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, shallowRef } from 'vue'
 import { marked } from 'marked'
-import { uploadImage } from '../api'
+import { uploadImage, resolveContentImages } from '../api'
 import { getMaxUploadSizeBytes, getMaxUploadSizeMB } from '../composables/useUploadConfig'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -233,8 +233,9 @@ const renderedContent = shallowRef(renderMarkdown(props.modelValue))
 let previewTimer: ReturnType<typeof setTimeout> | null = null
 watch(() => props.modelValue, (val) => {
   if (previewTimer) clearTimeout(previewTimer)
-  previewTimer = setTimeout(() => {
-    renderedContent.value = renderMarkdown(val)
+  previewTimer = setTimeout(async () => {
+    const html = renderMarkdown(val)
+    renderedContent.value = await resolveContentImages(html)
   }, 200)
 }, { immediate: true })
 
