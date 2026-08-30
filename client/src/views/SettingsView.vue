@@ -278,8 +278,8 @@ async function handleSync() {
 .card-desc { font-size: 0.9rem; color: var(--color-text-secondary); line-height: 1.5; }
 .hidden-input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 .message { margin-top: var(--space-md); padding: var(--space-md); border-radius: var(--radius-sm); font-size: 0.95rem; }
-.message.success { background: #E8F5E9; color: #2E7D32; }
-.message.error { background: #FFEBEE; color: #C62828; }
+.message.success { background: var(--color-success-bg); color: var(--color-success); }
+.message.error { background: var(--color-danger-light); color: var(--color-danger); }
 .loading-spinner-sm { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -321,7 +321,7 @@ async function handleSync() {
 
 .size-btn.active {
   border-color: var(--color-primary);
-  background: rgba(107, 68, 35, 0.08);
+  background: var(--color-primary-wash-2);
   color: var(--color-text);
   font-weight: 500;
 }
@@ -410,11 +410,11 @@ async function handleSync() {
   border-radius: 50%;
 }
 
-.sync-status-badge.idle .sync-dot { background: #9E9E9E; }
-.sync-status-badge.connecting .sync-dot { background: #FFA726; animation: pulse 1s infinite; }
-.sync-status-badge.connected .sync-dot { background: #66BB6A; }
-.sync-status-badge.syncing .sync-dot { background: #42A5F5; animation: pulse 0.5s infinite; }
-.sync-status-badge.error .sync-dot { background: #EF5350; }
+.sync-status-badge.idle .sync-dot { background: var(--color-text-muted); }
+.sync-status-badge.connecting .sync-dot { background: var(--color-warning); animation: pulse 1s infinite; }
+.sync-status-badge.connected .sync-dot { background: var(--color-success); }
+.sync-status-badge.syncing .sync-dot { background: var(--color-info); animation: pulse 0.5s infinite; }
+.sync-status-badge.error .sync-dot { background: var(--color-danger); }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
@@ -475,10 +475,10 @@ async function handleSync() {
 }
 
 .sync-info.sync-error {
-  color: #EF5350;
+  color: var(--color-danger);
 }
 
 .sync-msg { font-size: 0.85rem; }
-.sync-msg.success { color: #66BB6A; }
-.sync-msg.error { color: #EF5350; }
+.sync-msg.success { color: var(--color-success); }
+.sync-msg.error { color: var(--color-danger); }
 </style>

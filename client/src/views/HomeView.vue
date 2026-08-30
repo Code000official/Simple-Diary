@@ -538,7 +538,7 @@ onUnmounted(() => {
 }
 
 .btn-clear:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--color-primary-wash-1);
   color: var(--color-text);
 }
 
@@ -570,7 +570,7 @@ onUnmounted(() => {
 
 .mood-tag.active {
   border-color: var(--color-primary);
-  background-color: rgba(107, 68, 35, 0.1);
+  background-color: var(--color-primary-wash-2);
   transform: scale(1.1);
 }
 
