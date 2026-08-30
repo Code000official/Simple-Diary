@@ -58,3 +58,7 @@ __screenshots__/
 coverage
 /cypress/videos/
 /cypress/screenshots/
+
+# --- opencode ¹¤¾ß×´Ì¬ ---
+.omo/
+

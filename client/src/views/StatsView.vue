@@ -1,6 +1,6 @@
 <template>
   <div class="stats-view">
-    <h1 class="page-title">📊 统计</h1>
+    <h1 class="page-title">统计</h1>
 
     <div v-if="loading" class="stats-grid">
       <div v-for="i in 4" :key="i" class="stat-card card"><div class="skeleton skeleton-num"></div><div class="skeleton skeleton-label"></div></div>
@@ -83,20 +83,23 @@ onMounted(async () => {
 
 <style scoped>
 .stats-view { max-width: 800px; }
-.page-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 600; margin-bottom: var(--space-xl); color: var(--color-text); }
+.page-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: var(--space-xl); color: var(--color-text); }
 .loading { padding: var(--space-lg); text-align: center; color: var(--color-text-secondary); }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); margin-bottom: var(--space-lg); }
-.stat-card { display: flex; flex-direction: column; align-items: center; padding: var(--space-lg); }
-.stat-number { font-size: 2rem; font-weight: 700; color: var(--color-primary); font-family: var(--font-serif); }
+.stat-card { display: flex; flex-direction: column; align-items: center; padding: var(--space-lg) var(--space-md); }
+.stat-number { font-size: 2.1rem; font-weight: 700; color: var(--color-primary); font-family: var(--font-serif); line-height: 1.1; }
 .stat-label { font-size: 0.85rem; color: var(--color-text-secondary); margin-top: var(--space-xs); }
+@media (max-width: 560px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); }
+}
 .subsection-title { font-family: var(--font-serif); font-size: 1.1rem; font-weight: 600; margin-bottom: var(--space-md); color: var(--color-text); }
 .mood-dist { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-lg); }
 .mood-bars { display: flex; flex-direction: column; gap: var(--space-sm); }
 .mood-bar-row { display: flex; align-items: center; gap: var(--space-md); }
 .mood-bar-label { width: 80px; font-size: 0.88rem; color: var(--color-text); flex-shrink: 0; }
-.mood-bar-track { flex: 1; height: 20px; background: var(--color-bg-input); border-radius: var(--radius-sm); overflow: hidden; }
-.mood-bar-fill { height: 100%; background: var(--color-primary); border-radius: var(--radius-sm); transition: width 0.5s ease; opacity: 0.6; }
-.mood-bar-count { width: 30px; text-align: right; font-size: 0.85rem; color: var(--color-text-secondary); flex-shrink: 0; }
+.mood-bar-track { flex: 1; height: 14px; background: var(--color-bg-input); border-radius: 999px; overflow: hidden; }
+.mood-bar-fill { height: 100%; background: linear-gradient(to right, var(--color-primary-light), var(--color-primary)); border-radius: 999px; transition: width 0.5s ease; }
+.mood-bar-count { width: 30px; text-align: right; font-size: 0.85rem; color: var(--color-text-secondary); flex-shrink: 0; font-variant-numeric: tabular-nums; }
 
 .skeleton { background: var(--color-bg-input); border-radius: var(--radius-sm); animation: pulse 1.5s ease-in-out infinite; }
 .skeleton-num { width: 60px; height: 2rem; margin: 0 auto; }

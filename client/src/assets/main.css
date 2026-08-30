@@ -1,38 +1,47 @@
 /**
- * 全局样式
+ * 全局样式 —— 设计系统实现层
  *
- * 设计理念：
- * - 温暖、简洁的日记风格
- * - 使用 CSS 变量实现主题一致性
- * - 响应式设计，适配不同屏幕尺寸
- * - 无外部 CSS 框架，保持轻量
+ * 契约文档见仓库根目录 DESIGN.md（纸墨手账 Paper & Ink Journal）。
+ * 规则：任何颜色/字号/间距/圆角/阴影都必须引用本文件的令牌；
+ *      需要新令牌时先更新 DESIGN.md，再在这里落地。
  */
 
-/* ========== CSS 变量（设计令牌） ========== */
+/* ========== 设计令牌 ========== */
 :root {
-  /* 主色调：温暖的棕色系，适合日记应用的私密、温馨感 */
+  /* 主色：墨棕 */
   --color-primary: #6B4423;
   --color-primary-light: #8B6543;
   --color-primary-dark: #4A2F16;
 
-  /* 背景色：温暖的米白色 */
-  --color-bg: #FAF6F1;
-  --color-bg-card: #FFFFFF;
-  --color-bg-input: #F5F0EB;
+  /* 主色淡染（统一从这里取，禁止写字面量 rgba） */
+  --color-primary-wash-1: rgba(107, 68, 35, 0.04);
+  --color-primary-wash-2: rgba(107, 68, 35, 0.08);
+  --color-primary-wash-3: rgba(107, 68, 35, 0.15);
 
-  /* 文字色 */
-  --color-text: #2C1810;
-  --color-text-secondary: #8B7355;
-  --color-text-muted: #B0A090;
+  /* 纸面 */
+  --color-bg: #F6F1E8;
+  --color-bg-card: #FFFCF7;
+  --color-bg-input: #F1EADE;
 
-  /* 边框色 */
-  --color-border: #E8DDD4;
+  /* 文字墨色 */
+  --color-text: #2C1E12;
+  --color-text-secondary: #85715A;
+  --color-text-muted: #AB9B85;
+
+  /* 边框 */
+  --color-border: #E8DFCF;
+  --color-border-strong: #D8CBB4;
   --color-border-focus: #6B4423;
 
-  /* 功能色 */
-  --color-success: #4CAF50;
-  --color-danger: #E53935;
-  --color-danger-light: #FFEBEE;
+  /* 语义色（均配软底） */
+  --color-success: #4E9455;
+  --color-success-bg: rgba(78, 148, 85, 0.10);
+  --color-warning: #A97A21;
+  --color-warning-bg: rgba(197, 145, 45, 0.14);
+  --color-info: #3E7BA6;
+  --color-info-bg: rgba(62, 123, 166, 0.10);
+  --color-danger: #C94F47;
+  --color-danger-light: rgba(201, 79, 71, 0.10);
 
   /* 间距 */
   --space-xs: 4px;
@@ -42,54 +51,63 @@
   --space-xl: 32px;
   --space-2xl: 48px;
 
-  /* 圆角 */
+  /* 圆角节奏：内元素 → 容器 → 大容器/弹层 */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
 
-  /* 阴影 */
-  --shadow-sm: 0 1px 3px rgba(44, 24, 16, 0.06);
-  --shadow-md: 0 4px 12px rgba(44, 24, 16, 0.08);
-  --shadow-lg: 0 8px 24px rgba(44, 24, 16, 0.12);
+  /* 阴影：暖色相、上方光源、多层 */
+  --shadow-sm: 0 1px 2px rgba(64, 44, 26, 0.05), 0 1px 3px rgba(64, 44, 26, 0.04);
+  --shadow-md: 0 2px 6px rgba(64, 44, 26, 0.07), 0 6px 16px rgba(64, 44, 26, 0.06);
+  --shadow-lg: 0 4px 10px rgba(64, 44, 26, 0.08), 0 12px 32px rgba(64, 44, 26, 0.12);
 
-  /* 字体 */
+  /* 字体（离线约束：系统栈） */
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --font-serif: 'Georgia', 'Noto Serif SC', 'Source Han Serif SC', serif;
-  --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  --font-serif: Georgia, 'Palatino Linotype', 'STZhongsong', 'Noto Serif SC', 'Source Han Serif SC', serif;
+  --font-mono: 'Cascadia Mono', 'SF Mono', Consolas, 'Inconsolata', monospace;
 
   /* 过渡 */
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
-  --transition-slow: 350ms ease;
 }
 
-/* ========== 暗色模式 ========== */
+/* ========== 暗色模式（墨夜：带棕的暖黑，非纯黑） ========== */
 [data-theme="dark"] {
   --color-primary: #C49A6C;
   --color-primary-light: #D4B08C;
   --color-primary-dark: #A67C52;
 
-  --color-bg: #1A1410;
-  --color-bg-card: #2C241E;
-  --color-bg-input: #3A3028;
+  --color-primary-wash-1: rgba(196, 154, 108, 0.06);
+  --color-primary-wash-2: rgba(196, 154, 108, 0.11);
+  --color-primary-wash-3: rgba(196, 154, 108, 0.18);
 
-  --color-text: #E8DDD4;
-  --color-text-secondary: #B0A090;
-  --color-text-muted: #7A6B5C;
+  --color-bg: #171210;
+  --color-bg-card: #211B16;
+  --color-bg-input: #2C241D;
 
-  --color-border: #4A3D32;
+  --color-text: #E9DED2;
+  --color-text-secondary: #AE9C88;
+  --color-text-muted: #7D6D5B;
+
+  --color-border: #3A3026;
+  --color-border-strong: #4C4033;
   --color-border-focus: #C49A6C;
 
-  --color-success: #66BB6A;
-  --color-danger: #EF5350;
-  --color-danger-light: #4A2020;
+  --color-success: #6FB576;
+  --color-success-bg: rgba(111, 181, 118, 0.12);
+  --color-warning: #D2A24C;
+  --color-warning-bg: rgba(210, 162, 76, 0.13);
+  --color-info: #6FA6CE;
+  --color-info-bg: rgba(111, 166, 206, 0.12);
+  --color-danger: #E06A61;
+  --color-danger-light: rgba(224, 106, 97, 0.14);
 
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.4), 0 6px 16px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.4);
 }
 
-/* ========== 重置与基础样式 ========== */
+/* ========== 重置与基础 ========== */
 *,
 *::before,
 *::after {
@@ -114,8 +132,9 @@ body {
   font-family: var(--font-sans);
   color: var(--color-text);
   background-color: var(--color-bg);
-  line-height: 1.6;
+  line-height: 1.65;
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 a {
@@ -128,7 +147,46 @@ a:hover {
   color: var(--color-primary-light);
 }
 
-/* ========== 按钮通用样式 ========== */
+::selection {
+  background: var(--color-primary-wash-2);
+}
+
+/* 键盘可达性：焦点环（输入类控件有专属 focus 样式，不在此列） */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-primary-light);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* 细滚动条（暖色相） */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-text-muted);
+}
+
+/* 复选框/单选跟随主色 */
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--color-primary);
+}
+
+/* ========== 按钮 ========== */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -140,7 +198,11 @@ a:hover {
   font-size: 0.9rem;
   font-weight: 500;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: background-color var(--transition-fast),
+              color var(--transition-fast),
+              border-color var(--transition-fast),
+              box-shadow var(--transition-fast),
+              transform var(--transition-fast);
   line-height: 1.5;
   white-space: nowrap;
 }
@@ -149,33 +211,47 @@ a:hover {
   transform: scale(0.97);
 }
 
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   background-color: var(--color-primary);
-  color: white;
+  color: #FFFDF9;
+  font-weight: 600;
 }
 
 .btn-primary:hover {
   background-color: var(--color-primary-light);
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .btn-primary {
+  color: #211B16;
 }
 
 .btn-outline {
   background-color: transparent;
   color: var(--color-primary);
-  border: 1.5px solid var(--color-border);
+  border: 1.5px solid var(--color-border-strong);
+  font-weight: 600;
 }
 
 .btn-outline:hover {
   border-color: var(--color-primary);
-  background-color: rgba(107, 68, 35, 0.05);
+  background-color: var(--color-primary-wash-1);
 }
 
 .btn-danger {
   background-color: var(--color-danger);
   color: white;
+  font-weight: 600;
 }
 
 .btn-danger:hover {
-  background-color: #C62828;
+  filter: brightness(1.08);
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-ghost {
@@ -184,7 +260,7 @@ a:hover {
 }
 
 .btn-ghost:hover {
-  background-color: rgba(107, 68, 35, 0.05);
+  background-color: var(--color-primary-wash-1);
   color: var(--color-text);
 }
 
@@ -198,7 +274,7 @@ a:hover {
   font-size: 1rem;
 }
 
-/* ========== 输入框通用样式 ========== */
+/* ========== 输入控件 ========== */
 .input,
 .textarea,
 .select {
@@ -214,11 +290,16 @@ a:hover {
   outline: none;
 }
 
+.input::placeholder,
+.textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
 .input:focus,
 .textarea:focus,
 .select:focus {
   border-color: var(--color-border-focus);
-  box-shadow: 0 0 0 3px rgba(107, 68, 35, 0.1);
+  box-shadow: 0 0 0 3px var(--color-primary-wash-2);
 }
 
 .textarea {
@@ -227,26 +308,35 @@ a:hover {
   line-height: 1.7;
 }
 
-/* ========== 卡片样式 ========== */
+/* ========== 卡片 ========== */
 .card {
   background-color: var(--color-bg-card);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   border: 1px solid var(--color-border);
-  transition: box-shadow var(--transition-normal), transform var(--transition-normal);
+  transition: box-shadow var(--transition-normal), border-color var(--transition-normal);
 }
 
 .card:hover {
   box-shadow: var(--shadow-md);
 }
 
-/* ========== 工具类 ========== */
+/* ========== 工具 ========== */
 .container {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 var(--space-lg);
 }
 
+/* 数字数据位：等宽数字 */
+.tnum,
+.stat-number,
+.entry-time,
+.tl-date {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ========== 过渡动画（fade / slide 路由切换） ========== */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity var(--transition-normal);
@@ -259,7 +349,7 @@ a:hover {
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: all var(--transition-normal);
+  transition: opacity var(--transition-normal), transform var(--transition-normal);
 }
 
 .slide-enter-from {
@@ -272,7 +362,7 @@ a:hover {
   transform: translateY(-10px);
 }
 
-/* ========== 响应式 ========== */
+/* ========== 响应式间距档位 ========== */
 @media (min-width: 1024px) {
   :root {
     --space-sm: 10px;
@@ -291,7 +381,18 @@ a:hover {
   }
 }
 
-/* ========== 空状态占位 ========== */
+/* 动效弱化偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========== 空状态 ========== */
 .empty-state {
   text-align: center;
   padding: var(--space-2xl) var(--space-md);
@@ -301,10 +402,11 @@ a:hover {
 .empty-state .emoji {
   font-size: 3rem;
   margin-bottom: var(--space-md);
+  display: inline-block;
 }
 
 .empty-state p {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   margin-bottom: var(--space-lg);
 }
 
@@ -315,7 +417,7 @@ a:hover {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(30, 20, 12, 0.42);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -324,16 +426,23 @@ a:hover {
 }
 
 [data-theme="dark"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.66);
 }
 
 .modal-content {
   background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   padding: var(--space-lg);
   max-width: 400px;
   width: 100%;
   box-shadow: var(--shadow-lg);
+  animation: modal-in var(--transition-normal) ease both;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .modal-content h3 {
@@ -348,16 +457,10 @@ a:hover {
   margin-top: var(--space-lg);
 }
 
-/* ========== Markdown 渲染样式 ========== */
+/* ========== Markdown 渲染 ========== */
 /*
- * 这些样式同时应用于：
- * 1. MarkdownEditor 组件的预览面板
- * 2. DetailView 页面的日记内容展示
- *
- * 设计原则：
- * - 与整体日记应用的暖色调保持一致
- * - 排版清晰，适合长时间阅读
- * - 图片自适应宽度，不超出容器
+ * 同时用于编辑器预览面与详情页正文。
+ * 排版优先级最高：清晰、耐读、暖调一致。
  */
 .markdown-body {
   font-size: 1rem;
@@ -366,7 +469,6 @@ a:hover {
   word-break: break-word;
 }
 
-/* 标题 */
 .markdown-body h1,
 .markdown-body h2,
 .markdown-body h3,
@@ -375,13 +477,14 @@ a:hover {
 .markdown-body h6 {
   font-family: var(--font-serif);
   font-weight: 600;
+  letter-spacing: -0.01em;
   margin-top: 1.5em;
   margin-bottom: 0.5em;
   color: var(--color-text);
 }
 
 .markdown-body h1 {
-  font-size: 1.8rem;
+  font-size: 1.75rem;
   border-bottom: 2px solid var(--color-border);
   padding-bottom: 0.3em;
 }
@@ -393,30 +496,34 @@ a:hover {
 }
 
 .markdown-body h3 {
-  font-size: 1.3rem;
+  font-size: 1.28rem;
 }
 
 .markdown-body h4 {
   font-size: 1.1rem;
 }
 
-/* 段落 */
 .markdown-body p {
   margin-bottom: 1em;
 }
 
-/* 链接 */
+.markdown-body p:last-child {
+  margin-bottom: 0;
+}
+
 .markdown-body a {
   color: var(--color-primary);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration-color: var(--color-primary-wash-3);
+  text-underline-offset: 3px;
+  transition: text-decoration-color var(--transition-fast);
 }
 
 .markdown-body a:hover {
   color: var(--color-primary-light);
+  text-decoration-color: currentColor;
 }
 
-/* 强调 */
 .markdown-body strong {
   font-weight: 600;
   color: var(--color-text);
@@ -426,28 +533,26 @@ a:hover {
   font-style: italic;
 }
 
-/* 行内代码 */
 .markdown-body code {
-  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+  font-family: var(--font-mono);
   background: var(--color-bg-input);
   padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.9em;
+  font-size: 0.88em;
   color: var(--color-primary-dark);
 }
 
-/* 代码块 */
+[data-theme="dark"] .markdown-body code {
+  color: var(--color-primary-light);
+}
+
 .markdown-body pre {
-  background: #2d2d2d;
-  color: #f8f8f2;
+  background: #2B241E;
+  color: #F1EADD;
   padding: var(--space-md);
   border-radius: var(--radius-sm);
   overflow-x: auto;
   margin: 1em 0;
-}
-
-[data-theme="dark"] .markdown-body pre {
-  background: #1a1a1a;
 }
 
 .markdown-body pre code {
@@ -458,9 +563,8 @@ a:hover {
   line-height: 1.6;
 }
 
-/* 引用 */
 .markdown-body blockquote {
-  border-left: 4px solid var(--color-primary);
+  border-left: 3px solid var(--color-primary);
   padding: var(--space-sm) var(--space-md);
   margin: 1em 0;
   background: var(--color-bg-input);
@@ -472,7 +576,6 @@ a:hover {
   margin-bottom: 0;
 }
 
-/* 列表 */
 .markdown-body ul,
 .markdown-body ol {
   padding-left: 1.5em;
@@ -491,18 +594,18 @@ a:hover {
   list-style-type: decimal;
 }
 
-/* 分割线 */
 .markdown-body hr {
   border: none;
-  border-top: 2px solid var(--color-border);
-  margin: 2em 0;
+  border-top: 1px solid var(--color-border-strong);
+  margin: 2em auto;
+  width: 60%;
 }
 
-/* 表格 */
 .markdown-body table {
   width: 100%;
   border-collapse: collapse;
   margin: 1em 0;
+  font-size: 0.95em;
 }
 
 .markdown-body th,
@@ -518,15 +621,14 @@ a:hover {
 }
 
 .markdown-body tr:nth-child(even) {
-  background: var(--color-bg-input);
+  background: var(--color-primary-wash-1);
 }
 
-/* 图片 - 响应式 */
 .markdown-body img,
 .markdown-img {
   max-width: 100%;
   height: auto;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   margin: 0.5em 0;
   box-shadow: var(--shadow-sm);
 }
@@ -536,7 +638,6 @@ a:hover {
   margin-right: 0.5em;
 }
 
-/* 无序列表中的任务列表 */
 .markdown-body ul.contains-task-list {
   list-style: none;
   padding-left: 0;
@@ -545,5 +646,5 @@ a:hover {
 .markdown-body li.task-list-item {
   display: flex;
   align-items: center;
-  gap: 0.5em;
+  gap: var(--space-xs);
 }

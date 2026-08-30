@@ -743,7 +743,7 @@ function formatDate(dateStr: string): string {
 }
 
 .tag-option:hover {
-  background: rgba(107, 68, 35, 0.05);
+  background: var(--color-primary-wash-1);
   color: var(--color-text);
 }
 
@@ -841,7 +841,7 @@ function formatDate(dateStr: string): string {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.9);
+  background: color-mix(in srgb, var(--color-bg-card) 90%, transparent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -924,15 +924,10 @@ function formatDate(dateStr: string): string {
 }
 
 mark {
-  background: #FFE082;
-  color: inherit;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
   padding: 0 2px;
   border-radius: 2px;
-}
-
-[data-theme="dark"] mark {
-  background: #8D6E00;
-  color: #FFF;
 }
 
 .card-meta {
@@ -1027,7 +1022,7 @@ mark {
 }
 
 .context-item:hover {
-  background: rgba(107, 68, 35, 0.06);
+  background: var(--color-primary-wash-1);
 }
 
 .context-danger {
@@ -1047,7 +1042,7 @@ mark {
 .on-this-day {
   padding: var(--space-md) var(--space-lg);
   margin-bottom: var(--space-lg);
-  background: rgba(107, 68, 35, 0.03);
+  background: var(--color-primary-wash-1);
   border-left: 3px solid var(--color-primary);
 }
 
@@ -1085,7 +1080,7 @@ mark {
 }
 
 .otd-entry:hover {
-  background: rgba(107, 68, 35, 0.06);
+  background: var(--color-primary-wash-1);
 }
 
 .otd-mood {

@@ -9,15 +9,17 @@
         <div class="year-header">{{ year.year }}</div>
         <div v-for="month in year.months" :key="month.month" class="month-group">
           <div class="month-header">{{ month.monthName }}</div>
-          <div
-            v-for="entry in month.entries"
-            :key="entry.id"
-            class="timeline-entry"
-            @click="goDetail(entry.id)"
-          >
-            <span class="tl-date">{{ formatDate(entry.created_at) }}</span>
-            <span class="tl-mood">{{ getMoodEmoji(entry.mood) }}</span>
-            <span class="tl-title">{{ entry.title }}</span>
+          <div class="timeline-items">
+            <div
+              v-for="entry in month.entries"
+              :key="entry.id"
+              class="timeline-entry"
+              @click="goDetail(entry.id)"
+            >
+              <span class="tl-date">{{ formatDate(entry.created_at) }}</span>
+              <span class="tl-mood">{{ getMoodEmoji(entry.mood) }}</span>
+              <span class="tl-title">{{ entry.title }}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -102,16 +104,16 @@ function formatDate(dateStr: string): string {
 .year-header {
   font-family: var(--font-serif);
   font-size: 1.5rem;
-  font-weight: 600;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--color-primary);
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-sm);
-  border-bottom: 2px solid var(--color-primary);
+  border-bottom: 1px solid var(--color-border-strong);
 }
 
 .month-group {
   margin-bottom: var(--space-lg);
-  margin-left: var(--space-lg);
 }
 
 .month-header {
@@ -122,7 +124,25 @@ function formatDate(dateStr: string): string {
   margin-bottom: var(--space-sm);
 }
 
+/* 墨点轴线：本页的签名视觉 */
+.timeline-items {
+  position: relative;
+  padding-left: var(--space-xl);
+}
+
+.timeline-items::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 1px;
+  background: linear-gradient(to bottom, var(--color-border-strong), var(--color-border));
+}
+
 .timeline-entry {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -133,8 +153,28 @@ function formatDate(dateStr: string): string {
   margin-bottom: 2px;
 }
 
+/* 轴上的墨点 */
+.timeline-entry::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-xl) + 3px);
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-bg-card);
+  border: 2px solid var(--color-primary-light);
+  transform: translateY(-50%);
+  transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
 .timeline-entry:hover {
-  background: rgba(107, 68, 35, 0.05);
+  background-color: var(--color-primary-wash-1);
+}
+
+.timeline-entry:hover::before {
+  border-color: var(--color-primary);
+  transform: translateY(-50%) scale(1.25);
 }
 
 .tl-date {

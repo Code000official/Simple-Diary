@@ -516,8 +516,8 @@ watch(
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-sm);
   font-size: 0.85rem;
-  background: #FFF8E1;
-  color: #8D6E00;
+  background: var(--color-warning-bg);
+  color: var(--color-warning);
 }
 
 .checkbox-label {
@@ -536,8 +536,8 @@ watch(
 }
 
 .draft-saving {
-  background: #E3F2FD;
-  color: #1565C0;
+  background: var(--color-info-bg);
+  color: var(--color-info);
 }
 
 
@@ -569,7 +569,7 @@ watch(
 
 .option-btn.active {
   border-color: var(--color-primary);
-  background-color: rgba(107, 68, 35, 0.08);
+  background-color: var(--color-primary-wash-2);
 }
 
 .option-emoji {

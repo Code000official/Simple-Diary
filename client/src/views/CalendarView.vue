@@ -47,7 +47,7 @@
           <div class="day-entries-header">
             <h3 class="day-entries-title">{{ formatDayLabel(selectedDate) }}</h3>
             <router-link :to="`/edit?date=${selectedDate}`" class="btn btn-primary btn-sm">
-              ✏️ 写日记
+              写日记
             </router-link>
           </div>
 
@@ -312,8 +312,9 @@ watch([year, month], () => {
 
 .weekday-cell {
   text-align: center;
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 500;
+  letter-spacing: 0.12em;
   color: var(--color-text-muted);
   padding: var(--space-xs) 0;
 }
@@ -342,8 +343,9 @@ watch([year, month], () => {
 }
 
 .calendar-cell:hover:not(.cell-empty) {
-  border-color: var(--color-primary);
-  background: rgba(107, 68, 35, 0.04);
+  border-color: var(--color-border-strong);
+  background-color: var(--color-primary-wash-1);
+  box-shadow: var(--shadow-sm);
 }
 
 .cell-empty {
@@ -369,7 +371,7 @@ watch([year, month], () => {
 
 .cell-selected {
   border-color: var(--color-primary) !important;
-  background: rgba(107, 68, 35, 0.08) !important;
+  background-color: var(--color-primary-wash-2) !important;
 }
 
 .cell-day {
