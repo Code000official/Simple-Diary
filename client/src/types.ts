@@ -39,6 +39,22 @@ export interface UpdateEntryRequest {
   show_in_timeline?: boolean
 }
 
+/** 列表卡片用的条目元数据（客户端从 DiaryEntry 派生，不落盘） */
+export interface EntryMeta {
+  id: number
+  title: string
+  content: string
+  mood: string
+  tags: string
+  tagList: string[]
+  firstImg: string
+  excerpt: string
+  createdAt: string
+  updatedAt: string
+  favorited: boolean
+  pinnedAt: string | null
+}
+
 /** API 统一响应格式 */
 export interface ApiResponse<T = any> {
   success: boolean

@@ -176,6 +176,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { DiaryEntry } from '../types'
 import { MOOD_OPTIONS } from '../types'
 import { fetchEntries, deleteEntry } from '../api'
+import { getMoodEmoji, getMoodLabel, formatDateFull as formatDate, parseTags } from '../utils/format'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 
@@ -369,25 +370,7 @@ async function doDelete(): Promise<void> {
 
 /* ==================== 工具函数 ==================== */
 
-/**
- * 获取心情对应的 emoji
- * @param moodValue - 心情标识符
- * @returns 对应的 emoji 字符
- */
-function getMoodEmoji(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.emoji || ''
-}
-
-/**
- * 获取心情的中文标签
- * @param moodValue - 心情标识符
- * @returns 对应的中文名称
- */
-function getMoodLabel(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.label || ''
-}
+// 心情/日期/标签格式化统一使用 utils/format
 
 /**
  * 截断内容文本
@@ -404,64 +387,6 @@ function truncateContent(content: string, maxLength = 150): string {
   const cleanContent = content.replace(/\n/g, ' ').trim()
   if (cleanContent.length <= maxLength) return cleanContent
   return cleanContent.substring(0, maxLength) + '...'
-}
-
-/**
- * 格式化日期字符串
- * 将 ISO 格式的时间戳转为友好的中文日期格式
- *
- * 示例：
- *   输入: "2024-01-15 14:30:00"
- *   输出: "2024年1月15日 下午2:30"
- *
- * 实现逻辑：
- * 1. 尝试解析输入字符串为 Date 对象
- * 2. 按照中文习惯格式化（年月日 + 时分）
- * 3. 根据小时数判断上午/下午
- * 4. 解析失败时返回原始字符串（容错处理）
- *
- * @param dateString - ISO 格式的时间字符串
- * @returns 格式化后的中文日期字符串
- */
-function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    // 检查日期是否有效
-    if (isNaN(date.getTime())) return dateString
-
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1  // getMonth() 返回 0-11
-    const day = date.getDate()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-
-    // 将 24 小时制转换为 12 小时制（上午/下午）
-    const period = hours < 12 ? '上午' : '下午'
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
-
-    return `${year}年${month}月${day}日 ${period}${displayHours}:${String(minutes).padStart(2, '0')}`
-  } catch {
-    return dateString
-  }
-}
-
-/**
- * 解析标签字符串
- * 将逗号分隔的标签字符串转为数组，并过滤空标签
- *
- * 示例：
- *   输入: "旅行, 美食,, 摄影"
- *   输出: ["旅行", "美食", "摄影"]
- *
- * @param tagsString - 逗号分隔的标签字符串
- * @returns 标签数组
- */
-function parseTags(tagsString: string): string[] {
-  if (!tagsString) return []
-  return tagsString
-    .split(',')
-    .map(tag => tag.trim())      // 去除每个标签的首尾空格
-    .filter(tag => tag.length > 0) // 过滤空字符串
 }
 
 /* ==================== 生命周期 ==================== */

@@ -5,6 +5,14 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>我的日记</title>
+    <script>
+      // 在样式渲染前恢复主题，避免暗色用户冷启动时的亮色闪烁
+      try {
+        if (localStorage.getItem('diary_theme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark')
+        }
+      } catch (e) { /* localStorage 不可用时保持默认亮色 */ }
+    </script>
   </head>
   <body>
     <div id="app"></div>

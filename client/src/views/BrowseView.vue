@@ -21,7 +21,7 @@
             class="btn btn-outline btn-sm filter-btn"
             @click="openDatePicker"
           >
-            📅 {{ dateLabel }}
+            📅 <span>{{ (selectedDateStart || selectedDateEnd) ? dateLabel : '日期' }}<span v-if="!selectedDateStart && !selectedDateEnd" class="hide-sm">筛选</span></span>
             <span class="arrow-down">▾</span>
           </button>
           <div v-if="showDatePicker" class="tag-picker date-picker">
@@ -54,7 +54,7 @@
             class="btn btn-outline btn-sm filter-btn"
             @click="openTagPicker"
           >
-            🏷️ {{ selectedTags.length > 0 ? `标签 (${selectedTags.length})` : '标签筛选' }}
+            🏷️ <span>{{ selectedTags.length > 0 ? `标签 (${selectedTags.length})` : '标签' }}<span v-if="selectedTags.length === 0" class="hide-sm">筛选</span></span>
             <span class="arrow-down">▾</span>
           </button>
           <div v-if="showTagPicker" class="tag-picker">
@@ -93,11 +93,72 @@
             </div>
           </div>
         </div>
+        <div class="filter-btn-wrapper">
+          <button
+            class="btn btn-outline btn-sm filter-btn"
+            @click="toggleSortPicker"
+            title="排序方式"
+          >
+            <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <line x1="4" y1="6" x2="14" y2="6" />
+              <line x1="4" y1="12" x2="11" y2="12" />
+              <line x1="4" y1="18" x2="8" y2="18" />
+              <path d="M17 6v12" />
+              <polyline points="14 15 17 18 20 15" />
+            </svg>
+            <span>{{ sortLabel }}</span>
+            <span class="arrow-down">▾</span>
+          </button>
+          <div v-if="showSortPicker" class="tag-picker sort-picker">
+            <div class="tag-picker-header">
+              <span class="picker-title">排序方式</span>
+              <button class="btn btn-ghost btn-sm" @click="closeSortPicker">✕</button>
+            </div>
+            <div class="sort-picker-body">
+              <button
+                v-for="opt in SORT_OPTIONS"
+                :key="opt.value"
+                :class="['sort-option', { active: currentSort === opt.value }]"
+                @click="applySort(opt.value)"
+              >
+                <span>{{ opt.label }}</span>
+                <svg v-if="currentSort === opt.value" class="sort-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
         <button
           v-if="isManageMode && selectedIds.size > 0"
           class="btn btn-outline btn-sm filter-btn btn-delete"
           @click="deleteSelected"
         >🗑️ 删除 ({{ selectedIds.size }})</button>
+        <div v-if="isMobile" class="cols-switch" role="group" aria-label="显示列数">
+          <button
+            v-for="n in 3"
+            :key="n"
+            :class="['cols-btn', { active: mobileColumnCount === n }]"
+            :title="`${n} 列`"
+            :aria-pressed="mobileColumnCount === n"
+            @click="setMobileColumnCount(n)"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <g v-if="n === 1">
+                <rect x="7" y="4" width="10" height="16" rx="1.5" />
+              </g>
+              <g v-else-if="n === 2">
+                <rect x="4" y="4" width="7" height="16" rx="1.5" />
+                <rect x="13" y="4" width="7" height="16" rx="1.5" />
+              </g>
+              <g v-else>
+                <rect x="3.5" y="4" width="4.5" height="16" rx="1.5" />
+                <rect x="9.75" y="4" width="4.5" height="16" rx="1.5" />
+                <rect x="16" y="4" width="4.5" height="16" rx="1.5" />
+              </g>
+            </svg>
+          </button>
+        </div>
         <button
           :class="['btn', isManageMode ? 'btn-primary' : 'btn-outline', 'btn-sm', 'manage-btn']"
           @click="toggleManageMode"
@@ -107,11 +168,25 @@
       </div>
     </div>
 
-    <div v-if="loading" class="loading">
-      <div class="loading-spinner"></div>
+    <!-- 加载骨架屏：跟随当前布局形态（桌面网格 / 手机按所选列数） -->
+    <div v-if="loading" class="skeleton-grid" :style="isMobile ? { gridTemplateColumns: `repeat(${mobileColumnCount}, 1fr)` } : undefined">
+      <div v-for="i in (isMobile ? 6 : 12)" :key="i" class="skeleton-card card">
+        <div class="skeleton sk-img"></div>
+        <div class="sk-body">
+          <div class="skeleton sk-line" style="width: 72%"></div>
+          <div class="skeleton sk-line" style="width: 92%"></div>
+          <div class="skeleton sk-line" style="width: 55%"></div>
+        </div>
+      </div>
     </div>
 
     <template v-else>
+      <!-- 加载失败：给出明确提示与重试入口，而不是伪装成"没有日记" -->
+      <div v-if="loadError" class="error-state">
+        <p>日记加载失败，请检查数据存储是否可用</p>
+        <button class="btn btn-primary" @click="loadAll">重试</button>
+      </div>
+      <template v-else>
       <div v-if="lastYearEntries.length > 0 && !searchQuery && !showFavoritedOnly" class="on-this-day card">
         <div class="otd-header">
           <span class="otd-icon">🕰️</span>
@@ -131,46 +206,50 @@
       </div>
 
       <div v-if="filteredEntries.length === 0" class="empty-state">
-      <p>没有找到匹配的日记</p>
-    </div>
+        <p>没有找到匹配的日记</p>
+      </div>
 
-    <div v-else class="card-grid">
-      <div
-        v-for="entry in filteredEntries"
-        :key="entry.id"
-        :class="['card-item card', { 'card-selected': selectedIds.has(entry.id) }]"
-        @click="isManageMode ? toggleSelection(entry.id) : goDetail(entry.id)"
-        @contextmenu.prevent="openContextMenu($event, entry)"
-      >
-        <div v-if="isManageMode" class="card-checkbox" @click.stop>
-          <input
-            type="checkbox"
-            :checked="selectedIds.has(entry.id)"
-            @change="toggleSelection(entry.id)"
+      <!-- PC 端：横向自动填充网格，卡片等高对齐 -->
+      <div v-else-if="!isMobile" class="card-grid">
+        <EntryCard
+          v-for="entry in filteredEntries"
+          :key="entry.id"
+          :entry="entry"
+          :resolved-src="resolvedImages.get(entry.id)"
+          :manage-mode="isManageMode"
+          :selected="selectedIds.has(entry.id)"
+          :search-query="searchQuery"
+          :date-field="currentSort"
+          @open="goDetail(entry.id)"
+          @toggle-select="toggleSelection(entry.id)"
+          @toggle-fav="toggleFav(entry)"
+          @open-image="openLightbox"
+          @contextmenu="openContextMenu($event, entry)"
+        />
+      </div>
+
+      <!-- 手机端：瀑布流，列数可选（1–3），列内纵向排列，卡片高度随内容变化 -->
+      <div v-else class="masonry" :style="{ '--masonry-cols': mobileColumnCount }">
+        <div v-for="(col, ci) in masonryColumns" :key="ci" class="masonry-col">
+          <EntryCard
+            v-for="entry in col"
+            :key="entry.id"
+            mobile
+            :entry="entry"
+            :resolved-src="resolvedImages.get(entry.id)"
+            :manage-mode="isManageMode"
+            :selected="selectedIds.has(entry.id)"
+            :search-query="searchQuery"
+            :date-field="currentSort"
+            @open="goDetail(entry.id)"
+            @toggle-select="toggleSelection(entry.id)"
+            @toggle-fav="toggleFav(entry)"
+            @open-image="openLightbox"
+            @contextmenu="openContextMenu($event, entry)"
           />
         </div>
-        <div class="card-img" @click.stop="isManageMode ? toggleSelection(entry.id) : openLightbox(resolvedImages.get(entry.id) || entry.firstImg)">
-          <img v-if="entry.firstImg" :src="resolvedImages.get(entry.id) || entry.firstImg" alt="" />
-        </div>
-        <div class="card-body">
-          <div class="card-title-row">
-            <h2 class="card-title" v-html="highlight(entry.title)"></h2>
-            <button
-              class="card-fav-btn"
-              :class="{ favorited: entry.favorited }"
-              @click.stop="isManageMode ? toggleSelection(entry.id) : toggleFav(entry)"
-              title="收藏"
-            >⭐</button>
-          </div>
-          <div class="card-meta">
-            <span class="card-mood">{{ getMoodEmoji(entry.mood) }}</span>
-            <span v-if="entry.tags" class="card-tags">{{ displayTags(entry.tags) }}</span>
-            <span class="card-date">{{ formatDate(entry.createdAt) }}</span>
-          </div>
-          <p class="card-excerpt" v-html="highlight(entry.excerpt)"></p>
-        </div>
       </div>
-    </div>
+      </template>
     </template>
 
     <teleport to="body">
@@ -212,32 +291,116 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import type { DiaryEntry } from '../types'
-import { MOOD_OPTIONS } from '../types'
+import type { DiaryEntry, EntryMeta } from '../types'
 import { fetchEntries, deleteEntry, updateEntry, resolveImageUrl } from '../api'
+import { getMoodEmoji } from '../utils/format'
 import Lightbox from '../components/Lightbox.vue'
+import EntryCard from '../components/EntryCard.vue'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 
 const router = useRouter()
 const { show: dialogShow, options: dialogOptions, confirm: dialogConfirm, onConfirm: dialogOnConfirm, onCancel: dialogOnCancel } = useDialog()
 
-interface EntryMeta {
-  id: number
-  title: string
-  content: string
-  mood: string
-  tags: string
-  tagList: string[]
-  firstImg: string
-  excerpt: string
-  createdAt: string
-  favorited: boolean
-  pinnedAt: string | null
+/* ==================== 移动端 / 桌面端分布局 ==================== */
+
+/** 与 App.vue 顶栏断点一致：≤768px 走移动端布局 */
+const MOBILE_QUERY = '(max-width: 768px)'
+
+const isMobile = ref(window.matchMedia(MOBILE_QUERY).matches)
+
+function onMediaChange(e: MediaQueryListEvent): void {
+  isMobile.value = e.matches
+}
+
+let mediaQuery: MediaQueryList | null = null
+
+/** 移动端瀑布流列数（1–3），记忆在 localStorage，默认 2 列 */
+const MOBILE_COLUMNS_KEY = 'diary_mobile_columns'
+
+const mobileColumnCount = ref(
+  Math.min(3, Math.max(1, Number.parseInt(localStorage.getItem(MOBILE_COLUMNS_KEY) || '2', 10) || 2))
+)
+
+function setMobileColumnCount(n: number): void {
+  mobileColumnCount.value = n
+  localStorage.setItem(MOBILE_COLUMNS_KEY, String(n))
+}
+
+/* ==================== 排序方式（两端各自记忆） ==================== */
+
+type SortField = 'updatedAt' | 'createdAt'
+
+const SORT_OPTIONS: Array<{ value: SortField; label: string }> = [
+  { value: 'updatedAt', label: '编辑时间' },
+  { value: 'createdAt', label: '创建时间' },
+]
+
+/** 默认与原行为一致：手机端按编辑时间，桌面端按创建时间（置顶始终最前） */
+const SORT_DEFAULTS: Record<'mobile' | 'desktop', SortField> = {
+  mobile: 'updatedAt',
+  desktop: 'createdAt',
+}
+
+const SORT_KEY = 'diary_sort'
+
+function loadSortPrefs(): Record<'mobile' | 'desktop', SortField> {
+  try {
+    const raw = localStorage.getItem(SORT_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, unknown>
+      return {
+        mobile: parsed.mobile === 'createdAt' || parsed.mobile === 'updatedAt' ? parsed.mobile : SORT_DEFAULTS.mobile,
+        desktop: parsed.desktop === 'createdAt' || parsed.desktop === 'updatedAt' ? parsed.desktop : SORT_DEFAULTS.desktop,
+      }
+    }
+  } catch {
+    // 解析失败时回退默认值
+  }
+  return { ...SORT_DEFAULTS }
+}
+
+const sortPrefs = ref<Record<'mobile' | 'desktop', SortField>>(loadSortPrefs())
+
+const showSortPicker = ref(false)
+
+/** 当前生效的排序：跟随所在端 */
+const currentSort = computed<SortField>(() => isMobile.value ? sortPrefs.value.mobile : sortPrefs.value.desktop)
+
+const sortLabel = computed(() => {
+  const opt = SORT_OPTIONS.find(o => o.value === currentSort.value)
+  return (isMobile.value ? '' : '排序：') + (opt?.label || '')
+})
+
+function setSortPrefs(next: Record<'mobile' | 'desktop', SortField>): void {
+  sortPrefs.value = next
+  localStorage.setItem(SORT_KEY, JSON.stringify(next))
+}
+
+function applySort(field: SortField): void {
+  const key = isMobile.value ? 'mobile' : 'desktop'
+  setSortPrefs({ ...sortPrefs.value, [key]: field })
+  closeSortPicker()
+}
+
+function toggleSortPicker(): void {
+  if (showSortPicker.value) {
+    closeSortPicker()
+    return
+  }
+  showTagPicker.value = false
+  showDatePicker.value = false
+  showSortPicker.value = true
+}
+
+function closeSortPicker(): void {
+  showSortPicker.value = false
 }
 
 const entries = ref<DiaryEntry[]>([])
 const loading = ref(false)
+/** 加载失败标记：与"没有日记"区分开，给重试入口 */
+const loadError = ref(false)
 const searchQuery = ref('')
 const selectedTags = ref<string[]>([])
 const pendingTags = ref<string[]>([])
@@ -303,6 +466,7 @@ const entriesMeta = computed(() => {
     firstImg: extractFirstImage(e.content),
     excerpt: excerptText(e.content),
     createdAt: e.created_at,
+    updatedAt: e.updated_at,
     favorited: e.favorited,
     pinnedAt: e.pinned_at,
   }))
@@ -316,7 +480,9 @@ const entriesMeta = computed(() => {
     } else if (b.pinnedAt) {
       return 1
     }
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    // 置顶之后：按当前端所选的排序字段倒序（默认手机=编辑时间，桌面=创建时间）
+    const field = currentSort.value
+    return new Date(b[field]).getTime() - new Date(a[field]).getTime()
   })
   return result
 })
@@ -378,6 +544,17 @@ const filteredEntries = computed(() => {
   return result
 })
 
+/** 瀑布流分列：按顺序轮流放入各列，保证从左到右的阅读顺序，
+ *  列内卡片高度随内容自然变化 */
+const masonryColumns = computed<EntryMeta[][]>(() => {
+  const n = mobileColumnCount.value
+  const cols: EntryMeta[][] = Array.from({ length: n }, () => [])
+  filteredEntries.value.forEach((entry, i) => {
+    cols[i % n].push(entry)
+  })
+  return cols
+})
+
 const lastYearEntries = computed(() => {
   const now = new Date()
   const target = `${now.getFullYear() - 1}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
@@ -387,11 +564,14 @@ const lastYearEntries = computed(() => {
 onMounted(() => {
   loadAll()
   document.addEventListener('click', handleClickOutside)
+  mediaQuery = window.matchMedia(MOBILE_QUERY)
+  mediaQuery.addEventListener('change', onMediaChange)
 })
 
 onUnmounted(() => {
   if (searchTimer) clearTimeout(searchTimer)
   document.removeEventListener('click', handleClickOutside)
+  mediaQuery?.removeEventListener('change', onMediaChange)
 })
 
 function handleClickOutside(e: MouseEvent): void {
@@ -402,6 +582,9 @@ function handleClickOutside(e: MouseEvent): void {
   if (showDatePicker.value && !target.closest('.date-picker') && !target.closest('.filter-btn-wrapper')) {
     closeDatePicker()
   }
+  if (showSortPicker.value && !target.closest('.sort-picker') && !target.closest('.filter-btn-wrapper')) {
+    closeSortPicker()
+  }
   if (contextMenu.value.show && !target.closest('.context-menu') && !target.closest('.context-overlay')) {
     closeContextMenu()
   }
@@ -409,6 +592,7 @@ function handleClickOutside(e: MouseEvent): void {
 
 async function loadAll(): Promise<void> {
   loading.value = true
+  loadError.value = false
   try {
     const response = await fetchEntries({ search: searchQuery.value || undefined, limit: 1000 })
     if (response.success && response.data) {
@@ -424,6 +608,7 @@ async function loadAll(): Promise<void> {
     }
   } catch (error) {
     console.error('加载失败:', error)
+    loadError.value = true
   } finally {
     loading.value = false
   }
@@ -442,6 +627,7 @@ function openTagPicker(): void {
     return
   }
   showDatePicker.value = false
+  showSortPicker.value = false
   pendingTags.value = [...selectedTags.value]
   tagSearchQuery.value = ''
   showTagPicker.value = true
@@ -475,6 +661,7 @@ function openDatePicker(): void {
     return
   }
   showTagPicker.value = false
+  showSortPicker.value = false
   pendingDateStart.value = selectedDateStart.value
   pendingDateEnd.value = selectedDateEnd.value
   showDatePicker.value = true
@@ -595,38 +782,6 @@ function goDetail(id: number): void {
   router.push(`/detail/${id}`)
 }
 
-function getMoodEmoji(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.emoji || ''
-}
-
-function displayTags(tags: string): string {
-  const list = tags.split(',').map(t => t.trim()).filter(Boolean)
-  return list.slice(0, 2).join(' · ') + (list.length > 2 ? ' …' : '')
-}
-
-function highlight(text: string): string {
-  if (!searchQuery.value || !text) return escapeHtml(text)
-  const q = searchQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const escaped = escapeHtml(text)
-  return escaped.replace(new RegExp(`(${q})`, 'gi'), '<mark>$1</mark>')
-}
-
-function escapeHtml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
-}
-
-function formatDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
-    const m = d.getMonth() + 1
-    const day = d.getDate()
-    return `${m}月${day}日`
-  } catch {
-    return dateStr
-  }
-}
 </script>
 
 <style scoped>
@@ -808,182 +963,165 @@ function formatDate(dateStr: string): string {
   border-top: 1px solid var(--color-border);
 }
 
+/* PC 端：横向自动填充网格 */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: var(--space-md);
 }
 
-.card-item {
+/* 手机端：瀑布流。列数由 --masonry-cols 控制（1–3），
+ * 各列独立纵向排列，卡片高度随内容自然变化 */
+.masonry {
+  display: grid;
+  grid-template-columns: repeat(var(--masonry-cols, 2), 1fr);
+  gap: var(--space-sm);
+  align-items: start;
+}
+
+.masonry-col {
   display: flex;
   flex-direction: column;
-  cursor: pointer;
-  overflow: hidden;
-  transition: all var(--transition-normal);
-  position: relative;
-}
-
-.card-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-
-.card-selected {
-  outline: 2px solid var(--color-primary);
-  outline-offset: -2px;
-}
-
-.card-checkbox {
-  position: absolute;
-  top: var(--space-sm);
-  left: var(--space-sm);
-  z-index: 10;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--color-bg-card) 90%, transparent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.card-checkbox input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--color-primary);
-  cursor: pointer;
-}
-
-.card-item:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-}
-
-.card-img {
-  width: 100%;
-  height: 170px;
-  flex-shrink: 0;
-  overflow: hidden;
-  background: var(--color-bg-input);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.card-img img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.card-body {
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-md);
-  min-width: 0;
-  gap: var(--space-xs);
-}
-
-.card-title {
-  font-family: var(--font-serif);
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--color-text);
-  line-height: 1.4;
-  word-break: break-word;
-  flex: 1;
+  gap: var(--space-sm);
   min-width: 0;
 }
 
-.card-title-row {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-xs);
+/* 列数切换（仅移动端渲染） */
+.cols-switch {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--color-bg-card);
 }
 
-.card-fav-btn {
-  flex-shrink: 0;
-  background: none;
+.cols-btn {
+  width: 44px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
+  background: transparent;
+  color: var(--color-text-muted);
   cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0;
-  line-height: 1;
-  opacity: 0.3;
   transition: all var(--transition-fast);
 }
 
-.card-fav-btn:hover {
-  opacity: 0.7;
-  transform: scale(1.15);
+.cols-btn + .cols-btn {
+  border-left: 1px solid var(--color-border);
 }
 
-.card-fav-btn.favorited {
-  opacity: 1;
+.cols-btn.active {
+  background: var(--color-primary-wash-2);
+  color: var(--color-primary);
 }
 
-mark {
-  background: var(--color-warning-bg);
-  color: var(--color-warning);
-  padding: 0 2px;
-  border-radius: 2px;
+.cols-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
-.card-meta {
+/* 排序选择器 */
+.sort-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.sort-picker {
+  min-width: 180px;
+  /* 按钮靠近屏幕右缘时向左展开，避免溢出 */
+  left: auto;
+  right: 0;
+}
+
+.sort-picker-body {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-xs);
+}
+
+.sort-option {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-}
-
-.card-mood {
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.card-tags {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-date {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.card-excerpt {
-  font-size: 0.85rem;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 0.9rem;
   color: var(--color-text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  word-break: break-word;
+  text-align: left;
+  transition: all var(--transition-fast);
 }
 
-.loading {
+.sort-option:hover {
+  background: var(--color-primary-wash-1);
+  color: var(--color-text);
+}
+
+.sort-option.active {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.sort-check {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* 加载骨架屏 */
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.skeleton-card {
+  overflow: hidden;
+}
+
+.skeleton {
+  background: var(--color-bg-input);
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.sk-img {
+  height: 140px;
+}
+
+.sk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--space-md);
+}
+
+.sk-line {
+  height: 14px;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
+/* 加载失败 */
+.error-state {
   text-align: center;
   padding: var(--space-2xl);
+  color: var(--color-text-secondary);
 }
 
-.loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid var(--color-border);
-  border-top-color: var(--color-primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  margin: 0 auto;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.error-state p {
+  margin-bottom: var(--space-md);
 }
 
 .context-overlay {
@@ -1099,9 +1237,38 @@ mark {
   color: var(--color-text-muted);
 }
 
-@media (max-width: 450px) {
+@media (max-width: 768px) {
+  .browse-header {
+    margin-bottom: var(--space-md);
+  }
+
+  /* 移动端收窄按钮文案：日期筛选 → 日期 */
+  .hide-sm {
+    display: none;
+  }
+
+  /* 搜索占一整行，筛选按钮按自然宽度排列，放不下自动换行 */
+  .browse-toolbar {
+    gap: var(--space-xs) var(--space-sm);
+  }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
   .search-input {
     width: 100%;
+  }
+
+  .filter-btn-wrapper,
+  .filter-btn,
+  .cols-switch {
+    flex: 0 0 auto;
+  }
+
+  .filter-btn {
+    justify-content: center;
+    padding: 0 var(--space-sm);
   }
 }
 </style>

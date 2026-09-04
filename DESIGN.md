@@ -95,6 +95,15 @@ UI 装饰一律内联 SVG 描边图标（stroke=currentColor, width 2, round cap
 ## 9. 响应式
 
 - 断点：≤768px 移动（顶栏布局）/ 861–1023 平板 / ≥1024 桌面放大间距
+- **首页列表双布局（PC 与手机分开做，不复用同一套排版）**：
+  - 桌面：横向自动填充网格，封面固定高、摘要 3 行、等高对齐，默认按创建时间倒序（置顶优先）
+  - 移动：瀑布流多列（默认 2 列，1–3 列可选，记忆于 localStorage `diary_mobile_columns`），
+    列内纵向排列、默认按编辑时间倒序（置顶优先）
+  - 排序方式（编辑时间/创建时间）两端可在工具栏各自选择、分别记忆于 localStorage
+    `diary_sort`（`{mobile, desktop}`），不跨端共享
+  - 卡片无固定行高——封面按原始比例（上限 240px）、无图不占位、摘要 4 行，
+    高度随内容自然参差；触屏设备关闭 hover 位移（`@media (hover: hover)`）
+  - 卡片两种形态实现于 `EntryCard.vue` 的 `mobile` 变体，列表容器在 `BrowseView.vue`
 - 全高元素用 `min-height: 100dvh` 思路，避免 WebView 地址栏跳动（逐步替换中）
 
 ## 10. 接受的技术债

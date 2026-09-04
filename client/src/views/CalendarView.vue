@@ -94,8 +94,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import type { DiaryEntry } from '../types'
-import { MOOD_OPTIONS } from '../types'
 import { fetchEntriesByMonth } from '../api'
+import { getMoodEmoji } from '../utils/format'
 
 const route = useRoute()
 
@@ -207,11 +207,6 @@ async function loadMonthData(): Promise<void> {
   } catch (error) {
     console.error('加载日历数据失败:', error)
   }
-}
-
-function getMoodEmoji(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.emoji || ''
 }
 
 function formatDayLabel(dateStr: string): string {
