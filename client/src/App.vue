@@ -102,14 +102,46 @@ const {
 const THEME_KEY = 'diary_theme'
 const isDark = ref(localStorage.getItem(THEME_KEY) === 'dark')
 
+function toggleTheme(): void {
+  applyTheme(!isDark.value)
+}
+
+/* ==================== 状态栏隔离（Android） ==================== */
+
+/**
+ * 原生层（MainActivity）通过 JS 桥提供状态栏高度与图标外观控制。
+ * - 顶栏 padding-top 让出状态栏区域，背景延伸覆盖，内容与系统栏互不重叠
+ * - 浏览器/桌面环境无桥对象，全部为空操作
+ */
+interface SimpleDiaryNativeBridge {
+  getStatusBarHeight?: () => number
+  setStatusBarIconsLight?: (light: boolean) => void
+}
+
+function getNativeBridge(): SimpleDiaryNativeBridge | undefined {
+  return (window as unknown as { SimpleDiaryNative?: SimpleDiaryNativeBridge }).SimpleDiaryNative
+}
+
+function applyStatusBarIcons(): void {
+  getNativeBridge()?.setStatusBarIconsLight?.(!isDark.value)
+}
+
+function applyNativeStatusBar(): void {
+  const bridge = getNativeBridge()
+  if (bridge?.getStatusBarHeight) {
+    document.documentElement.style.setProperty('--safe-area-top', `${bridge.getStatusBarHeight()}px`)
+  }
+  applyStatusBarIcons()
+}
+
+applyNativeStatusBar()
+window.addEventListener('resize', applyNativeStatusBar)
+
 function applyTheme(dark: boolean): void {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
   localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light')
   isDark.value = dark
-}
-
-function toggleTheme(): void {
-  applyTheme(!isDark.value)
+  applyStatusBarIcons()
 }
 
 applyTheme(isDark.value)
@@ -161,7 +193,9 @@ onMounted(async () => {
   flex-direction: column;
   background: var(--color-bg-card);
   border-right: 1px solid var(--color-border);
-  padding: var(--space-lg) var(--space-md);
+  /* 顶栏让出系统状态栏区域（Android edge-to-edge 注入 --safe-area-top，
+   * 浏览器/桌面无注入时回退 0），背景延伸覆盖状态栏 */
+  padding: calc(var(--space-lg) + var(--safe-area-top, 0px)) var(--space-md) var(--space-lg);
   position: sticky;
   top: 0;
   height: 100vh;
@@ -351,7 +385,7 @@ onMounted(async () => {
 .main {
   flex: 1;
   min-width: 0;
-  padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+  padding: calc(var(--space-xl) + var(--safe-area-top, 0px)) var(--space-xl) var(--space-2xl);
 }
 
 @media (max-width: 768px) {
@@ -373,7 +407,7 @@ onMounted(async () => {
     align-items: center;
     row-gap: 2px;
     column-gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: calc(var(--space-sm) + var(--safe-area-top, 0px)) var(--space-md) var(--space-sm);
     position: sticky;
     top: 0;
     border-right: none;

@@ -95,6 +95,9 @@ UI 装饰一律内联 SVG 描边图标（stroke=currentColor, width 2, round cap
 ## 9. 响应式
 
 - 断点：≤768px 移动（顶栏布局）/ 861–1023 平板 / ≥1024 桌面放大间距
+- **状态栏隔离（Android edge-to-edge）**：MainActivity 通过 JS 桥注入 `--safe-area-top`
+  （状态栏高度），`.sidebar`/`.main` 顶部 padding 让出该区域，顶栏背景延伸覆盖；
+  未注入环境（浏览器/桌面）回退 0；状态栏图标深浅跟随应用内主题
 - **首页列表双布局（PC 与手机分开做，不复用同一套排版）**：
   - 桌面：横向自动填充网格，封面固定高、摘要 3 行、等高对齐，默认按创建时间倒序（置顶优先）
   - 移动：瀑布流多列（默认 2 列，1–3 列可选，记忆于 localStorage `diary_mobile_columns`），
