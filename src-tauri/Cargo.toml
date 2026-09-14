@@ -1,6 +1,6 @@
 [package]
 name = "simple-diary"
-version = "0.1.2"
+version = "0.1.3"
 description = "Simple Diary - A local-first diary application"
 authors = []
 edition = "2021"
