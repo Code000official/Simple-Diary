@@ -1,6 +1,15 @@
 <template>
   <div class="app">
     <aside class="sidebar">
+      <button
+        v-if="showBack"
+        class="back-btn"
+        aria-label="返回"
+        title="返回"
+        @click="goBack"
+      >
+        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+      </button>
       <router-link to="/" class="sidebar-brand">
         <span class="brand-badge" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
@@ -62,11 +71,29 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { useSyncConfig } from './composables/useSyncConfig'
 import { SyncService } from './sync'
 
 const router = useRouter()
+const route = useRoute()
+
+/* ==================== 移动端返回按钮 ==================== */
+
+/** 顶层标签页：日记 / 日历 / 时间线，其余页面在移动端顶栏显示返回 */
+const TOP_LEVEL_PATHS = ['/', '/calendar', '/timeline']
+
+const showBack = computed(() => !TOP_LEVEL_PATHS.includes(route.path))
+
+function goBack(): void {
+  // 有浏览历史时真实返回（保留来源页状态），直接打开二级页时兜底回首页
+  const state = window.history.state
+  if (state && state.back) {
+    router.back()
+  } else {
+    router.push('/')
+  }
+}
 const {
   serverUrl, syncStatus, autoSync,
   setSyncStatus, setLastSyncTime, setLastError,
@@ -75,14 +102,46 @@ const {
 const THEME_KEY = 'diary_theme'
 const isDark = ref(localStorage.getItem(THEME_KEY) === 'dark')
 
+function toggleTheme(): void {
+  applyTheme(!isDark.value)
+}
+
+/* ==================== 状态栏隔离（Android） ==================== */
+
+/**
+ * 原生层（MainActivity）通过 JS 桥提供状态栏高度与图标外观控制。
+ * - 顶栏 padding-top 让出状态栏区域，背景延伸覆盖，内容与系统栏互不重叠
+ * - 浏览器/桌面环境无桥对象，全部为空操作
+ */
+interface SimpleDiaryNativeBridge {
+  getStatusBarHeight?: () => number
+  setStatusBarIconsLight?: (light: boolean) => void
+}
+
+function getNativeBridge(): SimpleDiaryNativeBridge | undefined {
+  return (window as unknown as { SimpleDiaryNative?: SimpleDiaryNativeBridge }).SimpleDiaryNative
+}
+
+function applyStatusBarIcons(): void {
+  getNativeBridge()?.setStatusBarIconsLight?.(!isDark.value)
+}
+
+function applyNativeStatusBar(): void {
+  const bridge = getNativeBridge()
+  if (bridge?.getStatusBarHeight) {
+    document.documentElement.style.setProperty('--safe-area-top', `${bridge.getStatusBarHeight()}px`)
+  }
+  applyStatusBarIcons()
+}
+
+applyNativeStatusBar()
+window.addEventListener('resize', applyNativeStatusBar)
+
 function applyTheme(dark: boolean): void {
   document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
   localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light')
   isDark.value = dark
-}
-
-function toggleTheme(): void {
-  applyTheme(!isDark.value)
+  applyStatusBarIcons()
 }
 
 applyTheme(isDark.value)
@@ -134,7 +193,9 @@ onMounted(async () => {
   flex-direction: column;
   background: var(--color-bg-card);
   border-right: 1px solid var(--color-border);
-  padding: var(--space-lg) var(--space-md);
+  /* 顶栏让出系统状态栏区域（Android edge-to-edge 注入 --safe-area-top，
+   * 浏览器/桌面无注入时回退 0），背景延伸覆盖状态栏 */
+  padding: calc(var(--space-lg) + var(--safe-area-top, 0px)) var(--space-md) var(--space-lg);
   position: sticky;
   top: 0;
   height: 100vh;
@@ -180,6 +241,28 @@ onMounted(async () => {
   width: 17px;
   height: 17px;
   flex-shrink: 0;
+}
+
+/* 返回按钮：桌面端有常驻侧边栏，不需要；仅移动端顶栏显示 */
+.back-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.back-btn:hover {
+  color: var(--color-text);
+  background-color: var(--color-primary-wash-1);
+}
+
+.back-btn:active {
+  background-color: var(--color-primary-wash-3);
 }
 
 .sidebar-nav {
@@ -302,7 +385,7 @@ onMounted(async () => {
 .main {
   flex: 1;
   min-width: 0;
-  padding: var(--space-xl) var(--space-xl) var(--space-2xl);
+  padding: calc(var(--space-xl) + var(--safe-area-top, 0px)) var(--space-xl) var(--space-2xl);
 }
 
 @media (max-width: 768px) {
@@ -324,7 +407,7 @@ onMounted(async () => {
     align-items: center;
     row-gap: 2px;
     column-gap: var(--space-xs);
-    padding: var(--space-sm) var(--space-md);
+    padding: calc(var(--space-sm) + var(--safe-area-top, 0px)) var(--space-md) var(--space-sm);
     position: sticky;
     top: 0;
     border-right: none;
@@ -339,6 +422,16 @@ onMounted(async () => {
     flex-shrink: 0;
     padding-left: 0;
     gap: var(--space-xs);
+  }
+
+  /* 返回按钮位于顶栏最前（二级页面才渲染） */
+  .back-btn {
+    display: flex;
+    order: -1;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    margin-left: calc(-1 * var(--space-sm));
   }
 
   .brand-badge {

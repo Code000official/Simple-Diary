@@ -31,8 +31,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { DiaryEntry } from '../types'
-import { MOOD_OPTIONS } from '../types'
 import { fetchEntries } from '../api'
+import { getMoodEmoji, formatDateShort as formatDate } from '../utils/format'
 
 const router = useRouter()
 const entries = ref<DiaryEntry[]>([])
@@ -74,14 +74,6 @@ onMounted(async () => {
 
 function goDetail(id: number): void { router.push(`/detail/${id}`) }
 
-function getMoodEmoji(mood: string): string {
-  return MOOD_OPTIONS.find(m => m.value === mood)?.emoji || ''
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr)
-  return `${d.getMonth() + 1}月${d.getDate()}日`
-}
 </script>
 
 <style scoped>

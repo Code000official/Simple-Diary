@@ -75,8 +75,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import type { DiaryEntry } from '../types'
-import { MOOD_OPTIONS } from '../types'
 import { fetchDeletedEntries, restoreEntry, permanentlyDeleteEntry, resolveImageUrl } from '../api'
+import { getMoodEmoji, displayTags, formatDateDash as formatDate } from '../utils/format'
 import { useDialog } from '../composables/useDialog'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 
@@ -242,27 +242,6 @@ const entriesMeta = computed(() => {
     deletedAt: e.deleted_at || '',
   })).sort((a, b) => new Date(b.deletedAt).getTime() - new Date(a.deletedAt).getTime())
 })
-
-function getMoodEmoji(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.emoji || ''
-}
-
-function displayTags(tags: string): string {
-  const list = tags.split(',').map(t => t.trim()).filter(Boolean)
-  return list.slice(0, 2).join(' · ') + (list.length > 2 ? ' …' : '')
-}
-
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return ''
-  try {
-    const d = new Date(dateStr)
-    if (isNaN(d.getTime())) return dateStr
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
-  } catch {
-    return dateStr
-  }
-}
 </script>
 
 <style scoped>

@@ -14,6 +14,11 @@
  *   GET /uploads/:filename   — 获取图片
  *   DELETE /uploads/:filename — 删除图片
  *   GET /ping                — 健康检查
+ *
+ * Web 版托管（可选）:
+ *   若存在 data/client/（build.sh 产出的前端静态文件），则同时作为网站根目录，
+ *   浏览器直接访问 http://<host>:3457/ 即可使用 Web 版日记；
+ *   未部署时只提供同步 API。未知路径回退到 index.html（Vue Router history 模式）。
  */
 
 import http from 'node:http'
@@ -25,6 +30,11 @@ const PORT = parseInt(process.env.PORT || '3457', 10)
 const DATA_DIR = path.resolve(process.env.DATA_DIR || './data')
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads')
 const DATA_FILE = path.join(DATA_DIR, 'diary.json')
+// Web 版前端产物目录（build.sh / build.bat 复制 client/dist 到这里），可选
+const CLIENT_DIR = path.join(DATA_DIR, 'client')
+// 请求体上限：JSON 数据 50MB，图片上传 200MB
+const MAX_JSON_BYTES = 50 * 1024 * 1024
+const MAX_UPLOAD_BYTES = 200 * 1024 * 1024
 
 function ensureDataDir() {
   fs.mkdirSync(DATA_DIR, { recursive: true })
@@ -34,10 +44,22 @@ function ensureDataDir() {
   }
 }
 
-function readBody(req) {
+function readBody(req, maxBytes) {
   return new Promise((resolve, reject) => {
     const chunks = []
-    req.on('data', c => chunks.push(c))
+    let size = 0
+    req.on('data', c => {
+      size += c.length
+      if (size > maxBytes) {
+        // 暂停接收，让上层先把 413 响应写回，再在外层断开连接
+        req.pause()
+        const err = new Error('请求体超过大小限制')
+        err.statusCode = 413
+        reject(err)
+        return
+      }
+      chunks.push(c)
+    })
     req.on('end', () => resolve(Buffer.concat(chunks)))
     req.on('error', reject)
   })
@@ -68,6 +90,68 @@ function parseMultipart(body, contentType) {
     files.push({ filename: fn[1], data: Buffer.from(part.substring(headerEnd, contentEnd), 'binary') })
   }
   return files
+}
+
+/* ==================== Web 版静态托管 ==================== */
+
+const MIME_TYPES = {
+  html: 'text/html; charset=utf-8',
+  js: 'text/javascript; charset=utf-8',
+  mjs: 'text/javascript; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  json: 'application/json',
+  map: 'application/json',
+  svg: 'image/svg+xml',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  ico: 'image/x-icon',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
+  txt: 'text/plain; charset=utf-8',
+}
+
+/**
+ * 尝试用 data/client/ 服务静态文件（Web 版前端）。
+ * 返回 true 表示已响应；false 表示目录未部署或路径非法，交回给后续 404。
+ * 未知路径回退 index.html，支持 Vue Router history 模式刷新。
+ */
+function serveStatic(pn, isHead, res) {
+  let decoded
+  try {
+    decoded = decodeURIComponent(pn)
+  } catch {
+    return false
+  }
+  // 拒绝路径穿越：规范化后必须仍位于 CLIENT_DIR 内
+  if (decoded.includes('\0') || decoded.includes('..')) return false
+  const full = path.normalize(path.join(CLIENT_DIR, decoded))
+  if (full !== CLIENT_DIR && !full.startsWith(CLIENT_DIR + path.sep)) return false
+
+  let filePath = full
+  if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(CLIENT_DIR, 'index.html')
+    if (!fs.existsSync(filePath)) return false // 未部署 Web 版 → 走原 404
+  }
+
+  const ext = path.extname(filePath).slice(1).toLowerCase()
+  const headers = {
+    'Content-Type': MIME_TYPES[ext] || 'application/octet-stream',
+    // Vite 产物 assets/ 下文件名带内容 hash，可长缓存；入口与其余页面不缓存
+    'Cache-Control': decoded.startsWith('/assets/')
+      ? 'public, max-age=31536000, immutable'
+      : 'no-cache',
+  }
+  res.writeHead(200, headers)
+  if (isHead) {
+    res.end()
+  } else {
+    res.end(fs.readFileSync(filePath))
+  }
+  return true
 }
 
 const server = http.createServer(async (req, res) => {
@@ -110,7 +194,7 @@ const server = http.createServer(async (req, res) => {
     // PUT /data/diary.json
     if (pn === '/data/diary.json' && req.method === 'PUT') {
       ensureDataDir()
-      const body = await readBody(req)
+      const body = await readBody(req, MAX_JSON_BYTES)
       // 简单的有效性检查
       try { JSON.parse(body) } catch { sendJson(res, 400, { success: false, message: '无效的 JSON' }); return }
       // 先写临时文件再重命名，防止写一半崩溃损坏
@@ -124,7 +208,7 @@ const server = http.createServer(async (req, res) => {
     // POST /upload
     if (pn === '/upload' && req.method === 'POST') {
       const ct = req.headers['content-type'] || ''
-      const body = await readBody(req)
+      const body = await readBody(req, MAX_UPLOAD_BYTES)
       const files = parseMultipart(body, ct)
       if (!files || files.length === 0) {
         sendJson(res, 400, { success: false, message: '未找到文件' })
@@ -177,8 +261,18 @@ const server = http.createServer(async (req, res) => {
       return
     }
 
+    // 其余 GET/HEAD 交给 Web 版静态托管（若已部署 data/client/）
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      if (serveStatic(pn, req.method === 'HEAD', res)) return
+    }
+
     sendJson(res, 404, { success: false, message: 'Not found' })
   } catch (err) {
+    if (err.statusCode) {
+      sendJson(res, err.statusCode, { success: false, message: err.message })
+      req.destroy() // 响应已写入，断开剩余上传，避免客户端继续发送大请求体
+      return
+    }
     console.error('[sync-server]', err)
     res.writeHead(500)
     res.end('Internal server error')
@@ -189,4 +283,9 @@ ensureDataDir()
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[sync-server] 同步服务器已启动: http://0.0.0.0:${PORT}`)
   console.log(`[sync-server] 数据目录: ${DATA_DIR}`)
+  if (fs.existsSync(path.join(CLIENT_DIR, 'index.html'))) {
+    console.log(`[sync-server] Web 版已托管: http://<本机地址>:${PORT}/`)
+  } else {
+    console.log('[sync-server] 未发现 Web 版前端（data/client/），仅提供同步 API')
+  }
 })

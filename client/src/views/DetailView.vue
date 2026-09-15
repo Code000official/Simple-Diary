@@ -30,9 +30,9 @@
     <article v-else class="entry-detail">
       <!-- 顶部导航：返回按钮 + 操作按钮 -->
       <div class="detail-nav">
-        <router-link to="/" class="btn btn-ghost">
+        <button class="btn btn-ghost" @click="goBack">
           ← 返回列表
-        </router-link>
+        </button>
         <div class="detail-actions">
           <router-link :to="`/edit/${entry.id}`" class="btn btn-outline btn-sm">
             编辑
@@ -121,8 +121,11 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import type { DiaryEntry } from '../types'
-import { MOOD_OPTIONS, WEATHER_OPTIONS } from '../types'
 import { fetchEntry, deleteEntry, updateEntry, resolveContentImages } from '../api'
+import {
+  getMoodEmoji, getMoodLabel, getWeatherEmoji, getWeatherLabel,
+  formatDateFull as formatDate, parseTags,
+} from '../utils/format'
 import { useDialog } from '../composables/useDialog'
 import Lightbox from '../components/Lightbox.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
@@ -271,88 +274,18 @@ async function toggleTimelineVis(): Promise<void> {
 
 /* ==================== 工具函数 ==================== */
 
-/**
- * 获取心情 emoji
- * @param moodValue - 心情标识符
- * @returns 对应的 emoji
- */
-function getMoodEmoji(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.emoji || ''
-}
+// 心情/天气/日期/标签格式化统一使用 utils/format
 
 /**
- * 获取心情中文标签
- * @param moodValue - 心情标识符
- * @returns 中文名称
+ * 返回上一页；无浏览历史（如直接打开详情链接）时兜底回首页
  */
-function getMoodLabel(moodValue: string): string {
-  const mood = MOOD_OPTIONS.find(m => m.value === moodValue)
-  return mood?.label || ''
-}
-
-/**
- * 获取天气 emoji
- * @param weatherValue - 天气标识符
- * @returns 对应的 emoji
- */
-function getWeatherEmoji(weatherValue: string): string {
-  const w = WEATHER_OPTIONS.find(item => item.value === weatherValue)
-  return w?.emoji || ''
-}
-
-/**
- * 获取天气中文标签
- * @param weatherValue - 天气标识符
- * @returns 中文名称
- */
-function getWeatherLabel(weatherValue: string): string {
-  const w = WEATHER_OPTIONS.find(item => item.value === weatherValue)
-  return w?.label || ''
-}
-
-/**
- * 格式化日期为中文友好格式
- *
- * 示例：
- *   输入: "2024-01-15 14:30:00"
- *   输出: "2024年1月15日 下午2:30"
- *
- * @param dateString - ISO 格式时间字符串
- * @returns 格式化后的中文日期
- */
-function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return dateString
-
-    const year = date.getFullYear()
-    const month = date.getMonth() + 1
-    const day = date.getDate()
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-
-    const period = hours < 12 ? '上午' : '下午'
-    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
-
-    return `${year}年${month}月${day}日 ${period}${displayHours}:${String(minutes).padStart(2, '0')}`
-  } catch {
-    return dateString
+function goBack(): void {
+  const state = window.history.state
+  if (state && state.back) {
+    router.back()
+  } else {
+    router.push('/')
   }
-}
-
-/**
- * 解析标签字符串为数组
- *
- * @param tagsString - 逗号分隔的标签字符串
- * @returns 过滤空值后的标签数组
- */
-function parseTags(tagsString: string): string[] {
-  if (!tagsString) return []
-  return tagsString
-    .split(',')
-    .map(tag => tag.trim())
-    .filter(tag => tag.length > 0)
 }
 
 /* ==================== 生命周期和监听 ==================== */

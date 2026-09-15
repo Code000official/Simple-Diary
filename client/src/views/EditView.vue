@@ -167,7 +167,7 @@
  */
 
 import { ref, computed, reactive, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute, useRouter, onBeforeRouteLeave } from 'vue-router'
 import type { CreateEntryRequest } from '../types'
 import { MOOD_OPTIONS, WEATHER_OPTIONS } from '../types'
 import { fetchEntry, createEntry, updateEntry } from '../api'
@@ -219,6 +219,35 @@ const loadingEntry = ref(false)
 /** 是否正在保存 */
 const saving = ref(false)
 
+/* ==================== 未保存修改守卫 ==================== */
+
+/** 表单基线快照：加载完成/保存成功时记录，用于离开时的脏检查 */
+const formBaseline = ref('')
+
+function snapshotForm(): void {
+  formBaseline.value = JSON.stringify([
+    form.title, form.content, form.mood, form.weather, form.tags, entryDate.value, showInTimeline.value,
+  ])
+}
+
+const isDirty = computed(() => {
+  if (!formBaseline.value) return false
+  return formBaseline.value !== JSON.stringify([
+    form.title, form.content, form.mood, form.weather, form.tags, entryDate.value, showInTimeline.value,
+  ])
+})
+
+// 有未保存修改时拦截路由离开，防止误触丢稿
+onBeforeRouteLeave(async () => {
+  if (saving.value || !isDirty.value) return true
+  return await dialogConfirm({
+    title: '未保存的修改',
+    message: '当前日记尚未保存，确定要离开吗？',
+    confirmText: '放弃修改',
+    cancelText: '继续编辑',
+  })
+})
+
 /** 草稿自动保存 */
 const DRAFT_KEY = 'diary_draft'
 const draftSaving = ref(false)
@@ -256,6 +285,7 @@ async function loadEntry(): Promise<void> {
       form.tags = response.data.tags
       entryDate.value = response.data.created_at.slice(0, 10)
       showInTimeline.value = response.data.show_in_timeline
+      snapshotForm()
     } else {
       // 日记不存在，提示用户并跳转回首页
       await dialogConfirm({ title: '提示', message: '日记不存在', alertOnly: true })
@@ -357,6 +387,7 @@ async function handleSubmit(): Promise<void> {
       const response = await updateEntry(entryId.value, { ...form, date: entryDate.value, show_in_timeline: showInTimeline.value } as any)
       if (response.success) {
         clearDraft()
+        snapshotForm()
         router.push('/')
       } else {
         await dialogConfirm({ title: '操作失败', message: response.message || '保存失败', alertOnly: true })
@@ -366,6 +397,7 @@ async function handleSubmit(): Promise<void> {
       const response = await createEntry(entryData)
       if (response.success) {
         clearDraft()
+        snapshotForm()
         router.push('/')
       } else {
         await dialogConfirm({ title: '操作失败', message: response.message || '创建失败', alertOnly: true })
@@ -389,6 +421,7 @@ onMounted(() => {
     loadEntry()
   } else {
     checkDraft()
+    snapshotForm()
   }
 })
 
@@ -420,6 +453,7 @@ watch(
       form.weather = ''
       form.tags = ''
       checkDraft()
+      snapshotForm()
     }
   }
 )

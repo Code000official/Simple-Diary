@@ -46,6 +46,10 @@ const router = createRouter({
       component: () => import('../views/TimelineView.vue'),
     },
   ],
+  // 新导航回到页顶；前进/后退时恢复浏览器记录的原位置（长列表 → 详情 → 返回不丢位置）
+  scrollBehavior(_to, _from, savedPosition) {
+    return savedPosition || { top: 0 }
+  },
 })
 
 export default router

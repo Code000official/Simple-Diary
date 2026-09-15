@@ -232,6 +232,7 @@ const renderedContent = shallowRef(renderMarkdown(props.modelValue))
 
 let previewTimer: ReturnType<typeof setTimeout> | null = null
 watch(() => props.modelValue, (val) => {
+  autoResizeTextarea()
   if (previewTimer) clearTimeout(previewTimer)
   previewTimer = setTimeout(async () => {
     const html = renderMarkdown(val)
@@ -242,6 +243,43 @@ watch(() => props.modelValue, (val) => {
 onUnmounted(() => {
   if (previewTimer) clearTimeout(previewTimer)
 })
+
+/* ==================== 手机端输入框自适应高度 ==================== */
+
+/**
+ * 手机端：输入内容变长时 textarea 自动撑高（替代内部滚动）
+ * 桌面端：保持 flex 布局固定占满面板、内部滚动的原有行为
+ *
+ * 实现逻辑：
+ * 1. 先把 height 置为 auto，让 scrollHeight 反映真实内容高度
+ * 2. 再把 height 设为 scrollHeight（配合 CSS 的 min-height 保底）
+ */
+const MOBILE_QUERY = '(max-width: 768px)'
+let mobileMql: MediaQueryList | null = null
+
+function isMobileLayout(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia(MOBILE_QUERY).matches
+}
+
+function autoResizeTextarea(): void {
+  const textarea = textareaRef.value
+  if (!textarea) return
+  if (!isMobileLayout()) {
+    textarea.style.height = ''
+    return
+  }
+  textarea.style.height = 'auto'
+  textarea.style.height = `${textarea.scrollHeight}px`
+}
+
+function onLayoutChange(event: MediaQueryListEvent): void {
+  if (event.matches) {
+    autoResizeTextarea()
+  } else {
+    const textarea = textareaRef.value
+    if (textarea) textarea.style.height = ''
+  }
+}
 
 /* ==================== 输入处理 ==================== */
 
@@ -260,6 +298,7 @@ onUnmounted(() => {
 function onInput(event: Event): void {
   const target = event.target as HTMLTextAreaElement
   emit('update:modelValue', target.value)
+  autoResizeTextarea()
 }
 
 /* ==================== 快捷键处理 ==================== */
@@ -545,12 +584,21 @@ async function uploadAndInsert(file: File): Promise<void> {
 /* ==================== 生命周期 ==================== */
 
 /**
- * 组件挂载时设置初始光标位置
+ * 组件挂载：
+ * 1. 聚焦输入框
+ * 2. 监听桌面/手机布局切换（跨过断点时切换高度策略）
  */
 onMounted(() => {
   if (textareaRef.value) {
     textareaRef.value.focus()
   }
+  mobileMql = window.matchMedia(MOBILE_QUERY)
+  mobileMql.addEventListener('change', onLayoutChange)
+  autoResizeTextarea()
+})
+
+onUnmounted(() => {
+  mobileMql?.removeEventListener('change', onLayoutChange)
 })
 </script>
 
@@ -741,19 +789,34 @@ onMounted(() => {
 }
 
 /* ==================== 响应式 ==================== */
+
+/*
+ * 手机端：
+ * - 输入框放大到固定基准高度（约半屏，小屏机型保底 300px）
+ * - 预览窗格默认与输入框等高
+ * - 输入内容超过基准高度时由 JS（autoResizeTextarea）自动撑高，
+ *   因此高度只用 min-height 保底，不设 max-height
+ */
 @media (max-width: 768px) {
   .editor-body {
     flex-direction: column;
-    min-height: 300px;
+    min-height: 0;
   }
 
   .editor-pane {
     border-right: none;
     border-bottom: 1px solid var(--color-border);
+    flex: 0 0 auto;
   }
 
-  .mode-split .preview-pane {
-    min-height: 200px;
+  .editor-textarea {
+    /* 关闭 flex 拉伸：高度由 min-height 保底 + JS 按内容撑高 */
+    flex: none;
+    min-height: max(300px, 45vh);
+  }
+
+  .preview-pane {
+    min-height: max(300px, 45vh);
   }
 
   .toolbar-right {
