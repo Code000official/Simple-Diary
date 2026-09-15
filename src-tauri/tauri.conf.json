@@ -1,6 +1,6 @@
 {
   "productName": "Simple Diary",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "identifier": "com.simple.diary",
   "build": {
     "frontendDist": "../client/dist",

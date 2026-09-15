@@ -144,6 +144,14 @@ if [ ! -e "src-tauri/tauri" ] && [ -f "client/node_modules/@tauri-apps/cli/tauri
   echo "[OK] 已创建符号链接 src-tauri/tauri → tauri CLI"
 fi
 
+# 同步服务器为内网 http:// 地址，Android 9+ 默认拦截明文流量，
+# 放开 usesCleartextTraffic（tauri android init 重新生成后需再次 patch）
+GRADLE_KTS="src-tauri/gen/android/app/build.gradle.kts"
+if [ -f "$GRADLE_KTS" ] && grep -q 'manifestPlaceholders\["usesCleartextTraffic"\] = "false"' "$GRADLE_KTS"; then
+  sed -i 's|manifestPlaceholders\["usesCleartextTraffic"\] = "false"|manifestPlaceholders["usesCleartextTraffic"] = "true"|' "$GRADLE_KTS"
+  echo "[OK] 已放开明文 HTTP（usesCleartextTraffic=true），app 才能连接内网 http:// 同步服务器"
+fi
+
 # Gradle 发行版从 services.gradle.org 下载常超时，切换为国内镜像
 GRADLE_MIRROR_HOST="${GRADLE_MIRROR_HOST:-mirrors.cloud.tencent.com/gradle}"
 WRAPPER_PROPS="src-tauri/gen/android/gradle/wrapper/gradle-wrapper.properties"
