@@ -97,3 +97,7 @@ DESIGN.md        设计系统契约（颜色、字阶、组件状态等的唯一
 ## 设计系统
 
 视觉规范见 [DESIGN.md](DESIGN.md)：所有颜色、字号、间距、圆角、阴影均以 CSS 变量令牌定义于 `client/src/assets/main.css`，改样式先改契约。
+
+## 许可证
+
+[GPL-2.0-only](LICENSE)
